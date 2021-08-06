@@ -38,7 +38,7 @@ from labelme import ObjectStorageHandler as osh     # by hw1230
 
 # added by hw1230
 conf = get_config()
-local_depository = os.path.expanduser('~') + os.path.sep + "Documents" + os.path.sep + "labelme"
+local_depository = os.path.expanduser('~') + os.path.sep + "Documents" + os.path.sep + "labelme" + os.path.sep + "download"
 down_bucket_name = conf["down_bucket_name"]
 down_directory = conf["down_directory"]
 down_access_key = conf["down_access_key"]
@@ -1504,7 +1504,7 @@ class MainWindow(QtWidgets.QMainWindow):
             label_file_without_path = osp.basename(label_file)
             label_file = osp.join(self.output_dir, label_file_without_path)
         if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
-            label_file
+                label_file
         ):
             try:
                 self.labelFile = LabelFile(label_file)
@@ -2110,41 +2110,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.doneListWidget.clear()
 
         self.login_id = self.id.text()
-        # 로컬 다운로드 directory 지정
-        local_download_directory = local_depository + os.path.sep + "download"
+
         bucket_download_directory = down_directory + self.login_id
 
-        # progress = QtWidgets.QProgressDialog("Download files...", "Abort", 0, 100, self)
-        # progress.setWindowModality(Qt.WindowModal)
-
-        # progress.setValue(10)
-
-        # pd = QtWidgets.QDialog()
-        # pd.setWindowTitle("Download")
-        # pd.width = 200
-        # pd.height =200
-        # l1 = QtWidgets.QLabel("다운로드 중입니다...", pd)
-        # l1.setAlignment(Qt.AlignCenter)
-        # pd.setWindowModality(Qt.ApplicationModal)
-        # pd.show()
-        # pd.exec_()
-        # pd.accept()
-
         try:
-            osh.download_directory(down_bucket_name, bucket_download_directory, local_download_directory)
+            osh.download_directory(down_bucket_name, bucket_download_directory, local_depository)
 
         except Exception as E:
             QMessageBox.warning(self, "", str(E), QMessageBox.Ok)
             return
 
-        self.importDirImages(local_download_directory)
-        # progress.setValue(100)
-        # time.sleep(3)
-        # pd.close()
+        self.importDirImages(local_depository)
 
         self.uploadBtn.setEnabled(True)
 
-        localFiles = os.listdir(local_download_directory)
+        localFiles = os.listdir(local_depository)
         for f in localFiles:
             if f.endswith(".bak"):
                 ff = f.rsplit('.', 1)[0].rsplit('_', 1)
@@ -2164,8 +2144,14 @@ class MainWindow(QtWidgets.QMainWindow):
         if not checkedFiles:
             QMessageBox.warning(self, "", "업로드할 이미지를 선택하세요", QMessageBox.Ok)
 
+        progress = QtWidgets.QProgressDialog("Upload files...", '', 0, len(checkedFiles))
+        progress.setCancelButton(None)
+        progress.setAutoClose(True)
+        progress.setWindowModality(Qt.WindowModal)
+
         try:
-            for s in checkedFiles:
+            i = 0
+            for s in checkedFiles[::-1]:
                 # print(s[0])
                 upFile = s[0].split('.')[0]+".json"
                 # print(upFile)
@@ -2179,6 +2165,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     item = QtWidgets.QListWidgetItem(s[0].split(os.path.sep)[-1])
                     self.doneListWidget.addItem(item)
                     self.fileListWidget.takeItem(s[1])
+                i = i + 1
+                progress.setValue(i)
+
         except Exception as E:
             QMessageBox.warning(self, "", str(E), QMessageBox.Ok)
             return
