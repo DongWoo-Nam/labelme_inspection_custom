@@ -124,28 +124,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.labelList = LabelListWidget()
         self.lastOpenDir = None
 
-        ''' by hw1230
+        #''' by hw1230
         self.flag_dock = self.flag_widget = None
         self.flag_dock = QtWidgets.QDockWidget(self.tr("Flags"), self)
-        self.flag_dock.setObjectName("Flags")
+        # self.flag_dock.setObjectName("Flags") # by dwnam
         self.flag_widget = QtWidgets.QListWidget()
         if config["flags"]:
             self.loadFlags({k: False for k in config["flags"]})
-        self.flag_dock.setWidget(self.flag_widget)
+        # self.flag_dock.setWidget(self.flag_widget) # by dwnam
         self.flag_widget.itemChanged.connect(self.setDirty)
-        '''
+        #'''
 
-        self.labelList.itemSelectionChanged.connect(self.labelSelectionChanged)
-        self.labelList.itemDoubleClicked.connect(self.editLabel)
-        self.labelList.itemChanged.connect(self.labelItemChanged)
-        self.labelList.itemDropped.connect(self.labelOrderChanged)
-        self.shape_dock = QtWidgets.QDockWidget(
-            self.tr("Polygon Labels"), self
-        )
-        self.shape_dock.setObjectName("Labels")
-        self.shape_dock.setWidget(self.labelList)
-
-        ''' by hw1230
+        #''' by hw1230
         self.uniqLabelList = UniqueLabelQListWidget()
         self.uniqLabelList.setToolTip(
             self.tr(
@@ -160,9 +150,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 rgb = self._get_rgb_by_label(label)
                 self.uniqLabelList.setItemLabel(item, label, rgb)
         self.label_dock = QtWidgets.QDockWidget(self.tr(u"Label List"), self)
-        self.label_dock.setObjectName(u"Label List")
-        self.label_dock.setWidget(self.uniqLabelList)
-        '''
+        # self.label_dock.setObjectName(u"Label List")  # by dwnam
+        # self.label_dock.setWidget(self.uniqLabelList)  # by dwnam
+        #'''
 
         # GUI added by hw1230
         self.id = QtWidgets.QLineEdit()
