@@ -124,6 +124,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.labelList = LabelListWidget()
         self.lastOpenDir = None
 
+        ''' by hw1230
         self.flag_dock = self.flag_widget = None
         self.flag_dock = QtWidgets.QDockWidget(self.tr("Flags"), self)
         self.flag_dock.setObjectName("Flags")
@@ -132,6 +133,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.loadFlags({k: False for k in config["flags"]})
         self.flag_dock.setWidget(self.flag_widget)
         self.flag_widget.itemChanged.connect(self.setDirty)
+        '''
 
         self.labelList.itemSelectionChanged.connect(self.labelSelectionChanged)
         self.labelList.itemDoubleClicked.connect(self.editLabel)
@@ -143,6 +145,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.shape_dock.setObjectName("Labels")
         self.shape_dock.setWidget(self.labelList)
 
+        ''' by hw1230
         self.uniqLabelList = UniqueLabelQListWidget()
         self.uniqLabelList.setToolTip(
             self.tr(
@@ -159,6 +162,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.label_dock = QtWidgets.QDockWidget(self.tr(u"Label List"), self)
         self.label_dock.setObjectName(u"Label List")
         self.label_dock.setWidget(self.uniqLabelList)
+        '''
 
         # GUI added by hw1230
         self.id = QtWidgets.QLineEdit()
@@ -231,7 +235,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(scrollArea)
 
         features = QtWidgets.QDockWidget.DockWidgetFeatures()
-        for dock in ["flag_dock", "label_dock", "shape_dock", "file_dock", "done_dock"]:    # "done_dock" added by hw1230
+        for dock in ["shape_dock", "file_dock", "done_dock"]:    # "done_dock" added by hw1230
             if self._config[dock]["closable"]:
                 features = features | QtWidgets.QDockWidget.DockWidgetClosable
             if self._config[dock]["floatable"]:
@@ -1504,7 +1508,7 @@ class MainWindow(QtWidgets.QMainWindow):
             label_file_without_path = osp.basename(label_file)
             label_file = osp.join(self.output_dir, label_file_without_path)
         if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
-                label_file
+            label_file
         ):
             try:
                 self.labelFile = LabelFile(label_file)
@@ -2067,6 +2071,12 @@ class MainWindow(QtWidgets.QMainWindow):
         for filename in self.scanAllImages(dirpath):
             if pattern and pattern not in filename:
                 continue
+            
+            # by hw1230
+            ss = filename.split('.')
+            if os.path.isfile(ss[0] + "_" + ss[1] + ".bak"):
+                continue
+
             label_file = osp.splitext(filename)[0] + ".json"
             if self.output_dir:
                 label_file_without_path = osp.basename(label_file)
