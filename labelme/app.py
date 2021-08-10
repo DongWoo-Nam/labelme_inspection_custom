@@ -7,6 +7,7 @@ import os.path as osp
 import re
 import webbrowser
 import time
+import sys
 from PyQt5.QtWidgets import QMessageBox
 
 import imgviz
@@ -34,11 +35,23 @@ from labelme.widgets import ToolBar
 from labelme.widgets import UniqueLabelQListWidget
 from labelme.widgets import ZoomWidget
 
-from labelme import ObjectStorageHandler as osh     # by hw1230
+from labelme import ObjectStorageHandler as osh  # by hw1230
+
+# added by khlee - 작업자별로 config파일을 다르게 설정
+CONFFILE = None
+if getattr(sys, 'frozen', False):  # pyinstaller로 빌드하면 path가 꼬임. 이렇게 걸어주면 빌드 했을 때, 실행시킨 경로를 얻을 수 있음
+    APPLICATION_EXE_DIR = os.path.dirname(sys.executable)
+    APPLICATION_DATA_DIR = sys._MEIPASS
+    if os.path.isfile(APPLICATION_EXE_DIR + '/test.yaml'):
+        CONFFILE = APPLICATION_EXE_DIR + '/test.yaml'
+else:
+    APPLICATION_EXE_DIR = os.path.dirname(os.path.abspath(__file__))
+    APPLICATION_DATA_DIR = APPLICATION_EXE_DIR
 
 # added by hw1230
-conf = get_config()
-local_depository = os.path.expanduser('~') + os.path.sep + "Documents" + os.path.sep + "labelme" + os.path.sep + "download"
+# conf = get_config()
+conf = get_config(CONFFILE)  # added by khlee
+local_depository = os.path.expanduser('~') + os.path.sep + "Documents" + os.path.sep + "labelme"
 down_bucket_name = conf["down_bucket_name"]
 down_directory = conf["down_directory"]
 down_access_key = conf["down_access_key"]
@@ -61,16 +74,15 @@ LABEL_COLORMAP = imgviz.label_colormap(value=200)
 
 
 class MainWindow(QtWidgets.QMainWindow):
-
     FIT_WINDOW, FIT_WIDTH, MANUAL_ZOOM = 0, 1, 2
 
     def __init__(
-        self,
-        config=None,
-        filename=None,
-        output=None,
-        output_file=None,
-        output_dir=None,
+            self,
+            config=None,
+            filename=None,
+            output=None,
+            output_file=None,
+            output_dir=None,
     ):
         if output is not None:
             logger.warning(
@@ -84,7 +96,7 @@ class MainWindow(QtWidgets.QMainWindow):
             config = get_config()
         self._config = config
 
-        self.login_id = ""      # by hw1230
+        self.login_id = ""  # by hw1230
 
         # set default shape colors
         Shape.line_color = QtGui.QColor(*self._config["shape"]["line_color"])
@@ -127,13 +139,23 @@ class MainWindow(QtWidgets.QMainWindow):
         #''' by hw1230
         self.flag_dock = self.flag_widget = None
         self.flag_dock = QtWidgets.QDockWidget(self.tr("Flags"), self)
-        # self.flag_dock.setObjectName("Flags") # by dwnam
+        # self.flag_dock.setObjectName("Flags")                       # Annotation changed by dwnam
         self.flag_widget = QtWidgets.QListWidget()
         if config["flags"]:
             self.loadFlags({k: False for k in config["flags"]})
-        # self.flag_dock.setWidget(self.flag_widget) # by dwnam
+        # self.flag_dock.setWidget(self.flag_widget)                  # Annotation changed by dwnam
         self.flag_widget.itemChanged.connect(self.setDirty)
         #'''
+
+        self.labelList.itemSelectionChanged.connect(self.labelSelectionChanged)
+        self.labelList.itemDoubleClicked.connect(self.editLabel)
+        self.labelList.itemChanged.connect(self.labelItemChanged)
+        self.labelList.itemDropped.connect(self.labelOrderChanged)
+        self.shape_dock = QtWidgets.QDockWidget(
+            self.tr("Polygon Labels"), self
+        )
+        self.shape_dock.setObjectName("Labels")
+        self.shape_dock.setWidget(self.labelList)
 
         #''' by hw1230
         self.uniqLabelList = UniqueLabelQListWidget()
@@ -150,8 +172,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 rgb = self._get_rgb_by_label(label)
                 self.uniqLabelList.setItemLabel(item, label, rgb)
         self.label_dock = QtWidgets.QDockWidget(self.tr(u"Label List"), self)
-        # self.label_dock.setObjectName(u"Label List")  # by dwnam
-        # self.label_dock.setWidget(self.uniqLabelList)  # by dwnam
+        # self.label_dock.setObjectName(u"Label List")                # Annotation changed by dwnam
+        # self.label_dock.setWidget(self.uniqLabelList)               # Annotation changed by dwnam
         #'''
 
         # GUI added by hw1230
@@ -176,13 +198,13 @@ class MainWindow(QtWidgets.QMainWindow):
         fileListLayout = QtWidgets.QVBoxLayout()
         fileListLayout.setContentsMargins(0, 0, 0, 0)
         fileListLayout.setSpacing(0)
-        fileListLayout.addLayout(self.loginLayout)      # by hw1230
+        fileListLayout.addLayout(self.loginLayout)  # by hw1230
         # fileListLayout.addWidget(self.fileSearch)     # deleted by hw1230
         fileListLayout.addWidget(self.fileListWidget)
-        fileListLayout.addWidget(self.uploadBtn)        # by hw1230
+        fileListLayout.addWidget(self.uploadBtn)  # by hw1230
         self.file_dock = QtWidgets.QDockWidget(self.tr(u"작업 목록"), self)
         self.file_dock.setObjectName(u"Files")
-        flw = QtWidgets.QWidget()        # 헷갈려서 변수명 변경 fileListWidget -> flw. by hw1230
+        flw = QtWidgets.QWidget()  # 헷갈려서 변수명 변경 fileListWidget -> flw. by hw1230
         flw.setLayout(fileListLayout)
         self.file_dock.setWidget(flw)
 
@@ -225,7 +247,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(scrollArea)
 
         features = QtWidgets.QDockWidget.DockWidgetFeatures()
-        for dock in ["shape_dock", "file_dock", "done_dock"]:    # "done_dock" added by hw1230
+        for dock in ["shape_dock", "file_dock", "done_dock"]:  # "done_dock" added by hw1230
             if self._config[dock]["closable"]:
                 features = features | QtWidgets.QDockWidget.DockWidgetClosable
             if self._config[dock]["floatable"]:
@@ -240,7 +262,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.addDockWidget(Qt.RightDockWidgetArea, self.label_dock)
         self.addDockWidget(Qt.RightDockWidgetArea, self.shape_dock)
         self.addDockWidget(Qt.RightDockWidgetArea, self.file_dock)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.done_dock)      # by hw1230
+        self.addDockWidget(Qt.RightDockWidgetArea, self.done_dock)  # by hw1230
 
         # Actions
         action = functools.partial(utils.newAction, self)
@@ -722,7 +744,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 # self.label_dock.toggleViewAction(),
                 self.shape_dock.toggleViewAction(),
                 self.file_dock.toggleViewAction(),
-                self.done_dock.toggleViewAction(),      # by hw1230
+                self.done_dock.toggleViewAction(),  # by hw1230
                 None,
                 fill_drawing,
                 None,
@@ -961,7 +983,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def undoShapeEdit(self):
         ia = self.canvas.restoreShape()
-        if ia:      # by hw1230
+        if ia:  # by hw1230
             self.actions.autoAnnotation.setEnabled(True)
         self.labelList.clear()
         self.loadShapes(self.canvas.shapes)
@@ -1131,7 +1153,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         # currIndex = self.imageList.index(str(item.text()))
-        currIndex = self.imageList.index(str(item.data(99)))    # by hw1230
+        currIndex = self.imageList.index(str(item.data(99)))  # by hw1230
         if currIndex < len(self.imageList):
             filename = self.imageList[currIndex]
             if filename:
@@ -1193,9 +1215,9 @@ class MainWindow(QtWidgets.QMainWindow):
             label_id += self._config["shift_auto_shape_color"]
             return LABEL_COLORMAP[label_id % len(LABEL_COLORMAP)]
         elif (
-            self._config["shape_color"] == "manual"
-            and self._config["label_colors"]
-            and label in self._config["label_colors"]
+                self._config["shape_color"] == "manual"
+                and self._config["label_colors"]
+                and label in self._config["label_colors"]
         ):
             return self._config["label_colors"][label]
         elif self._config["default_shape_color"]:
@@ -1214,7 +1236,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._noSelectionSlot = False
         self.canvas.loadShapes(shapes, replace=replace)
 
-    def loadLabels(self, shapes, replace=True):     # replace added by hw1230
+    def loadLabels(self, shapes, replace=True):  # replace added by hw1230
         s = []
         for shape in shapes:
             label = shape["label"]
@@ -1248,7 +1270,7 @@ class MainWindow(QtWidgets.QMainWindow):
             shape.other_data = other_data
 
             s.append(shape)
-        self.loadShapes(s, replace)     # replace added by hw1230
+        self.loadShapes(s, replace)  # replace added by hw1230
 
     def loadFlags(self, flags):
         self.flag_widget.clear()
@@ -1474,7 +1496,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """Load the specified file, or the last opened file if None."""
         # changing fileListWidget loads file
         if filename in self.imageList and (
-            self.fileListWidget.currentRow() != self.imageList.index(filename)
+                self.fileListWidget.currentRow() != self.imageList.index(filename)
         ):
             self.fileListWidget.setCurrentRow(self.imageList.index(filename))
             self.fileListWidget.repaint()
@@ -1498,7 +1520,7 @@ class MainWindow(QtWidgets.QMainWindow):
             label_file_without_path = osp.basename(label_file)
             label_file = osp.join(self.output_dir, label_file_without_path)
         if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
-            label_file
+                label_file
         ):
             try:
                 self.labelFile = LabelFile(label_file)
@@ -1524,9 +1546,9 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.imageData:
                 self.imagePath = filename
             self.labelFile = None
-            self.canvas.shapesBackups.append([])            # by hw1230
+            self.canvas.shapesBackups.append([])  # by hw1230
             self.canvas.isAutoBackup.append(False)
-        self.actions.autoAnnotation.setEnabled(True)    # by hw1230
+        self.actions.autoAnnotation.setEnabled(True)  # by hw1230
 
         image = QtGui.QImage.fromData(self.imageData)
 
@@ -1607,9 +1629,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def resizeEvent(self, event):
         if (
-            self.canvas
-            and not self.image.isNull()
-            and self.zoomMode != self.MANUAL_ZOOM
+                self.canvas
+                and not self.image.isNull()
+                and self.zoomMode != self.MANUAL_ZOOM
         ):
             self.adjustScale()
         super(MainWindow, self).resizeEvent(event)
@@ -1963,7 +1985,7 @@ class MainWindow(QtWidgets.QMainWindow):
             "proceed anyway?"
         ).format(len(self.canvas.selectedShapes))
         if yes == QtWidgets.QMessageBox.warning(
-            self, self.tr("Attention"), msg, yes | no, yes
+                self, self.tr("Attention"), msg, yes | no, yes
         ):
             self.remLabels(self.canvas.deleteSelected())
             self.setDirty()
@@ -2004,7 +2026,7 @@ class MainWindow(QtWidgets.QMainWindow):
             )
         )
         self.importDirImages(targetDirPath)
-        self.uploadBtn.setEnabled(False)    # by hw1230
+        self.uploadBtn.setEnabled(False)  # by hw1230
 
     @property
     def imageList(self):
@@ -2012,7 +2034,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for i in range(self.fileListWidget.count()):
             item = self.fileListWidget.item(i)
             # lst.append(item.text())
-            lst.append(item.data(99))   # by hw1230
+            lst.append(item.data(99))  # by hw1230
         return lst
 
     def importDroppedImageFiles(self, imageFiles):
@@ -2024,7 +2046,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.filename = None
         for file in imageFiles:
             if file in self.imageList or not file.lower().endswith(
-                tuple(extensions)
+                    tuple(extensions)
             ):
                 continue
             label_file = osp.splitext(file)[0] + ".json"
@@ -2034,7 +2056,7 @@ class MainWindow(QtWidgets.QMainWindow):
             item = QtWidgets.QListWidgetItem(file)
             item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
-                label_file
+                    label_file
             ):
                 item.setCheckState(Qt.Checked)
             else:
@@ -2057,11 +2079,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lastOpenDir = dirpath
         self.filename = None
         self.fileListWidget.clear()
-        self.doneListWidget.clear()     # by hw1230
+        self.doneListWidget.clear()  # by hw1230
         for filename in self.scanAllImages(dirpath):
             if pattern and pattern not in filename:
                 continue
-            
+
             # by hw1230
             ss = filename.split('.')
             if os.path.isfile(ss[0] + "_" + ss[1] + ".bak"):
@@ -2072,15 +2094,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 label_file_without_path = osp.basename(label_file)
                 label_file = osp.join(self.output_dir, label_file_without_path)
             # item = QtWidgets.QListWidgetItem(filename)
-            fn = filename.split(os.path.sep)       # by hw1230
-            item = QtWidgets.QListWidgetItem(fn[-1])    # by hw1230
-            item.setData(99, filename)      # by hw1230
+            fn = filename.split(os.path.sep)  # by hw1230
+            item = QtWidgets.QListWidgetItem(fn[-1])  # by hw1230
+            item.setData(99, filename)  # by hw1230
             # item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsUserCheckable) # by hw1230
+            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsUserCheckable)  # by hw1230
             # deleted by hw1230
             # if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
             #    label_file
-            #):
+            # ):
             #    item.setCheckState(Qt.Checked)
             # else:
             #    item.setCheckState(Qt.Unchecked)
@@ -2153,7 +2175,7 @@ class MainWindow(QtWidgets.QMainWindow):
             i = 0
             for s in checkedFiles[::-1]:
                 # print(s[0])
-                upFile = s[0].split('.')[0]+".json"
+                upFile = s[0].split('.')[0] + ".json"
                 # print(upFile)
                 if os.path.isfile(upFile):
                     osh.upload_object(up_bucket_name, upFile, up_directory + self.login_id)
@@ -2176,455 +2198,455 @@ class MainWindow(QtWidgets.QMainWindow):
     def autoAnnotation(self):
         self.canvas.setEnabled(False)
         shapes = [
-            {			"label": "num_tape",
-			"points": [
-				[
-					566,
-					1021
-				],
-				[
-					563,
-					1027
-				],
-				[
-					563,
-					1092
-				],
-				[
-					566,
-					1098
-				],
-				[
-					568,
-					1100
-				],
-				[
-					580,
-					1100
-				],
-				[
-					593,
-					1101
-				],
-				[
-					599,
-					1102
-				],
-				[
-					604,
-					1103
-				],
-				[
-					613,
-					1106
-				],
-				[
-					622,
-					1107
-				],
-				[
-					633,
-					1107
-				],
-				[
-					637,
-					1108
-				],
-				[
-					641,
-					1109
-				],
-				[
-					651,
-					1113
-				],
-				[
-					663,
-					1116
-				],
-				[
-					669,
-					1117
-				],
-				[
-					683,
-					1117
-				],
-				[
-					715,
-					1115
-				],
-				[
-					715,
-					1114
-				],
-				[
-					717,
-					1112
-				],
-				[
-					718,
-					1109
-				],
-				[
-					719,
-					1097
-				],
-				[
-					719,
-					1028
-				],
-				[
-					716,
-					1022
-				],
-				[
-					714,
-					1020
-				],
-				[
-					569,
-					1019
-				]
-			],
+            {		"label": "num_tape",
+                         "points": [
+                             [
+                                 566,
+                                 1021
+                             ],
+                             [
+                                 563,
+                                 1027
+                             ],
+                             [
+                                 563,
+                                 1092
+                             ],
+                             [
+                                 566,
+                                 1098
+                             ],
+                             [
+                                 568,
+                                 1100
+                             ],
+                             [
+                                 580,
+                                 1100
+                             ],
+                             [
+                                 593,
+                                 1101
+                             ],
+                             [
+                                 599,
+                                 1102
+                             ],
+                             [
+                                 604,
+                                 1103
+                             ],
+                             [
+                                 613,
+                                 1106
+                             ],
+                             [
+                                 622,
+                                 1107
+                             ],
+                             [
+                                 633,
+                                 1107
+                             ],
+                             [
+                                 637,
+                                 1108
+                             ],
+                             [
+                                 641,
+                                 1109
+                             ],
+                             [
+                                 651,
+                                 1113
+                             ],
+                             [
+                                 663,
+                                 1116
+                             ],
+                             [
+                                 669,
+                                 1117
+                             ],
+                             [
+                                 683,
+                                 1117
+                             ],
+                             [
+                                 715,
+                                 1115
+                             ],
+                             [
+                                 715,
+                                 1114
+                             ],
+                             [
+                                 717,
+                                 1112
+                             ],
+                             [
+                                 718,
+                                 1109
+                             ],
+                             [
+                                 719,
+                                 1097
+                             ],
+                             [
+                                 719,
+                                 1028
+                             ],
+                             [
+                                 716,
+                                 1022
+                             ],
+                             [
+                                 714,
+                                 1020
+                             ],
+                             [
+                                 569,
+                                 1019
+                             ]
+                         ],
 
-            "shape_type" : "polygon", "flags" : {}, "group_id" : None, "other_data" : {}},
+                         "shape_typ" : "polygon", "flag" : {}, "group_i" : None, "other_dat" : {}},
             {			"label": "g_tape",
-			"points": [
-				[
-					623,
-					1960
-				],
-				[
-					617,
-					1963
-				],
-				[
-					615,
-					1965
-				],
-				[
-					614,
-					1965
-				],
-				[
-					613,
-					1966
-				],
-				[
-					613,
-					1967
-				],
-				[
-					611,
-					1969
-				],
-				[
-					611,
-					1977
-				],
-				[
-					612,
-					1992
-				],
-				[
-					614,
-					1996
-				],
-				[
-					615,
-					2001
-				],
-				[
-					616,
-					2006
-				],
-				[
-					616,
-					2019
-				],
-				[
-					617,
-					2031
-				],
-				[
-					618,
-					2033
-				],
-				[
-					620,
-					2036
-				],
-				[
-					622,
-					2038
-				],
-				[
-					624,
-					2039
-				],
-				[
-					736,
-					2039
-				],
-				[
-					739,
-					2036
-				],
-				[
-					740,
-					2034
-				],
-				[
-					741,
-					2032
-				],
-				[
-					741,
-					1967
-				],
-				[
-					740,
-					1965
-				],
-				[
-					739,
-					1963
-				],
-				[
-					736,
-					1960
-				]
-			],
-            "shape_type" : "polygon", "flags" : {}, "group_id" : None, "other_data" : {}},
+                         "points": [
+                             [
+                                 623,
+                                 1960
+                             ],
+                             [
+                                 617,
+                                 1963
+                             ],
+                             [
+                                 615,
+                                 1965
+                             ],
+                             [
+                                 614,
+                                 1965
+                             ],
+                             [
+                                 613,
+                                 1966
+                             ],
+                             [
+                                 613,
+                                 1967
+                             ],
+                             [
+                                 611,
+                                 1969
+                             ],
+                             [
+                                 611,
+                                 1977
+                             ],
+                             [
+                                 612,
+                                 1992
+                             ],
+                             [
+                                 614,
+                                 1996
+                             ],
+                             [
+                                 615,
+                                 2001
+                             ],
+                             [
+                                 616,
+                                 2006
+                             ],
+                             [
+                                 616,
+                                 2019
+                             ],
+                             [
+                                 617,
+                                 2031
+                             ],
+                             [
+                                 618,
+                                 2033
+                             ],
+                             [
+                                 620,
+                                 2036
+                             ],
+                             [
+                                 622,
+                                 2038
+                             ],
+                             [
+                                 624,
+                                 2039
+                             ],
+                             [
+                                 736,
+                                 2039
+                             ],
+                             [
+                                 739,
+                                 2036
+                             ],
+                             [
+                                 740,
+                                 2034
+                             ],
+                             [
+                                 741,
+                                 2032
+                             ],
+                             [
+                                 741,
+                                 1967
+                             ],
+                             [
+                                 740,
+                                 1965
+                             ],
+                             [
+                                 739,
+                                 1963
+                             ],
+                             [
+                                 736,
+                                 1960
+                             ]
+                         ],
+                         "shape_typ" : "polygon", "flag" : {}, "group_i" : None, "other_dat" : {}},
             {			"label": "g_tape",
-			"points": [
-				[
-					691,
-					180
-				],
-				[
-					688,
-					181
-				],
-				[
-					680,
-					185
-				],
-				[
-					679,
-					187
-				],
-				[
-					678,
-					189
-				],
-				[
-					678,
-					214
-				],
-				[
-					679,
-					218
-				],
-				[
-					680,
-					222
-				],
-				[
-					682,
-					226
-				],
-				[
-					683,
-					230
-				],
-				[
-					684,
-					236
-				],
-				[
-					685,
-					244
-				],
-				[
-					686,
-					258
-				],
-				[
-					686,
-					293
-				],
-				[
-					687,
-					302
-				],
-				[
-					688,
-					309
-				],
-				[
-					690,
-					313
-				],
-				[
-					692,
-					315
-				],
-				[
-					703,
-					315
-				],
-				[
-					715,
-					312
-				],
-				[
-					722,
-					310
-				],
-				[
-					725,
-					309
-				],
-				[
-					728,
-					307
-				],
-				[
-					731,
-					306
-				],
-				[
-					734,
-					305
-				],
-				[
-					738,
-					304
-				],
-				[
-					744,
-					303
-				],
-				[
-					751,
-					302
-				],
-				[
-					763,
-					301
-				],
-				[
-					787,
-					302
-				],
-				[
-					793,
-					302
-				],
-				[
-					798,
-					297
-				],
-				[
-					800,
-					294
-				],
-				[
-					801,
-					292
-				],
-				[
-					802,
-					289
-				],
-				[
-					803,
-					277
-				],
-				[
-					804,
-					265
-				],
-				[
-					805,
-					251
-				],
-				[
-					805,
-					224
-				],
-				[
-					804,
-					209
-				],
-				[
-					802,
-					206
-				],
-				[
-					798,
-					202
-				],
-				[
-					795,
-					200
-				],
-				[
-					793,
-					199
-				],
-				[
-					771,
-					199
-				],
-				[
-					760,
-					198
-				],
-				[
-					753,
-					197
-				],
-				[
-					747,
-					196
-				],
-				[
-					744,
-					195
-				],
-				[
-					741,
-					194
-				],
-				[
-					731,
-					188
-				],
-				[
-					729,
-					187
-				],
-				[
-					719,
-					183
-				],
-				[
-					715,
-					182
-				],
-				[
-					710,
-					181
-				],
-				[
-					700,
-					180
-				]
-			],
-            "shape_type" : "polygon", "flags" : {}, "group_id" : None, "other_data" : {}}
+                         "points": [
+                             [
+                                 691,
+                                 180
+                             ],
+                             [
+                                 688,
+                                 181
+                             ],
+                             [
+                                 680,
+                                 185
+                             ],
+                             [
+                                 679,
+                                 187
+                             ],
+                             [
+                                 678,
+                                 189
+                             ],
+                             [
+                                 678,
+                                 214
+                             ],
+                             [
+                                 679,
+                                 218
+                             ],
+                             [
+                                 680,
+                                 222
+                             ],
+                             [
+                                 682,
+                                 226
+                             ],
+                             [
+                                 683,
+                                 230
+                             ],
+                             [
+                                 684,
+                                 236
+                             ],
+                             [
+                                 685,
+                                 244
+                             ],
+                             [
+                                 686,
+                                 258
+                             ],
+                             [
+                                 686,
+                                 293
+                             ],
+                             [
+                                 687,
+                                 302
+                             ],
+                             [
+                                 688,
+                                 309
+                             ],
+                             [
+                                 690,
+                                 313
+                             ],
+                             [
+                                 692,
+                                 315
+                             ],
+                             [
+                                 703,
+                                 315
+                             ],
+                             [
+                                 715,
+                                 312
+                             ],
+                             [
+                                 722,
+                                 310
+                             ],
+                             [
+                                 725,
+                                 309
+                             ],
+                             [
+                                 728,
+                                 307
+                             ],
+                             [
+                                 731,
+                                 306
+                             ],
+                             [
+                                 734,
+                                 305
+                             ],
+                             [
+                                 738,
+                                 304
+                             ],
+                             [
+                                 744,
+                                 303
+                             ],
+                             [
+                                 751,
+                                 302
+                             ],
+                             [
+                                 763,
+                                 301
+                             ],
+                             [
+                                 787,
+                                 302
+                             ],
+                             [
+                                 793,
+                                 302
+                             ],
+                             [
+                                 798,
+                                 297
+                             ],
+                             [
+                                 800,
+                                 294
+                             ],
+                             [
+                                 801,
+                                 292
+                             ],
+                             [
+                                 802,
+                                 289
+                             ],
+                             [
+                                 803,
+                                 277
+                             ],
+                             [
+                                 804,
+                                 265
+                             ],
+                             [
+                                 805,
+                                 251
+                             ],
+                             [
+                                 805,
+                                 224
+                             ],
+                             [
+                                 804,
+                                 209
+                             ],
+                             [
+                                 802,
+                                 206
+                             ],
+                             [
+                                 798,
+                                 202
+                             ],
+                             [
+                                 795,
+                                 200
+                             ],
+                             [
+                                 793,
+                                 199
+                             ],
+                             [
+                                 771,
+                                 199
+                             ],
+                             [
+                                 760,
+                                 198
+                             ],
+                             [
+                                 753,
+                                 197
+                             ],
+                             [
+                                 747,
+                                 196
+                             ],
+                             [
+                                 744,
+                                 195
+                             ],
+                             [
+                                 741,
+                                 194
+                             ],
+                             [
+                                 731,
+                                 188
+                             ],
+                             [
+                                 729,
+                                 187
+                             ],
+                             [
+                                 719,
+                                 183
+                             ],
+                             [
+                                 715,
+                                 182
+                             ],
+                             [
+                                 710,
+                                 181
+                             ],
+                             [
+                                 700,
+                                 180
+                             ]
+                         ],
+                         "shape_typ" : "polygon", "flag" : {}, "group_i" : None, "other_dat" : {}}
         ]
         self.canvas.isAuto = True
         self.loadLabels(shapes, False)
