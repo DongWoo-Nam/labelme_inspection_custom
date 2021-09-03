@@ -2133,10 +2133,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.login_id = self.id.text()
 
-        bucket_download_directory = down_directory + self.login_id
+        # bucket_download_directory = down_directory + self.login_id
+        bucket_download_directory = down_directory
 
         try:
-            osh.download_directory(down_bucket_name, bucket_download_directory, local_depository)
+            osh.download_directory(down_bucket_name, bucket_download_directory, local_depository, self.login_id)
 
         except Exception as E:
             QMessageBox.warning(self, "", str(E), QMessageBox.Ok)

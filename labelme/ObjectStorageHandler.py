@@ -9,19 +9,21 @@ from qtpy import QtGui
 from qtpy import QtWidgets
 
 import app
-#from app import down_access_key, down_access_token
-#from app import up_access_key, up_access_token
+
+# from app import down_access_key, down_access_token
+# from app import up_access_key, up_access_token
 
 service_name = 's3'
 endpoint_url = 'https://kr.object.ncloudstorage.com'
 region_name = 'kr-standard'
-#access_key = 'DgEJlJmCpUpELcRyAj9F'
-#access_token = 'axcixs48W3YsXxCNmCaYSspUEOHzkXJW0u0b7gmi'
+# access_key = 'DgEJlJmCpUpELcRyAj9F'
+# access_token = 'axcixs48W3YsXxCNmCaYSspUEOHzkXJW0u0b7gmi'
 
 s3_down = boto3.client(service_name, aws_access_key_id=app.down_access_key, aws_secret_access_key=app.down_access_token,
-                endpoint_url=endpoint_url)
+                       endpoint_url=endpoint_url)
 s3_up = boto3.client(service_name, aws_access_key_id=app.up_access_key, aws_secret_access_key=app.up_access_token,
-                endpoint_url=endpoint_url)
+                     endpoint_url=endpoint_url)
+
 
 # 버킷 목록 가져오기
 def get_bucket_list():
@@ -58,11 +60,12 @@ def get_object_list_directory(bucket_name: str, directory_path: str, max_key: in
             current_directory = directory_path
             delete_directory_path = item.get('Key').replace(directory_path + '/', '')
 
-            if item.get('Size') == 0: # 서브 디렉토리 할당
+            if item.get('Size') == 0:  # 서브 디렉토리 할당
                 item['DirectoryName'] = delete_directory_path.rsplit('/')[0]
                 if len(item['DirectoryName']) > 0:
+                    item['Key'] = file_name.rstrip('/')
                     sub_directory.append(item)
-            else: # 오브젝트 객체 할당
+            else:  # 오브젝트 객체 할당
                 path_segments = delete_directory_path.rsplit('/')
                 # 현재 디렉토리에 오브젝트인지 체크
                 if len(path_segments) > 1:
@@ -86,11 +89,19 @@ def download_object(bucket_name, object_name, save_path):
 
 
 # 디렉토리 다운로드
-def download_directory(bucket_name, directory_name, save_path):
+def download_directory(bucket_name, directory_name, save_path, login_id):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
+    print('directory: %s' % directory_name)
+
     objectResponse = get_object_list_directory(bucket_name=bucket_name, directory_path=directory_name)
+
+    subdirectories = objectResponse.get('subdirectory')
+    if len(subdirectories) > 0 and (len(subdirectories) == 1 and not subdirectories[1].get('Key') == directory_name):
+        for subdirectory in subdirectories:
+            print("subdirectory :" + subdirectory.get('Key'))
+            download_directory(bucket_name, subdirectory.get('Key').rstrip('/'), save_path, login_id)
 
     items = objectResponse.get('items')
 
@@ -101,11 +112,14 @@ def download_directory(bucket_name, directory_name, save_path):
 
     i = 0
     for item in items:
-        item_save_path = save_path + '/' + str(item.get('Key').rsplit('/')[-1])
-        # if progress.wasCanceled():
-        #     break
-        # print(item_save_path)
-        download_object(bucket_name=bucket_name, object_name=item.get('Key'), save_path=item_save_path)
+        print('item: %d key: %s' % (i, item.get('Key')))
+        if item.get('Key').find(login_id) > 0:
+            item_save_path = save_path + '/' + str(item.get('Key').rsplit('/')[-1])
+            # if progress.wasCanceled():
+            #     break
+            # print(item_save_path)
+            download_object(bucket_name=bucket_name, object_name=item.get('Key'), save_path=item_save_path)
+
         i = i + 1
         progress.setValue(i)
 
@@ -151,12 +165,12 @@ if __name__ == '__main__':
 #    upload_directory(bucket_name='ai-object-storage',
 #                     local_folder_path='/Users/hoseobkim/Documents/work/EchossTech/test', directory='upload_test')
 
-    # downloadDirectory(bucket_name='ai-object-storage', directory_name=directory, save_path='/Users/hoseobkim/Documents/work/EchossTech/test')
+# downloadDirectory(bucket_name='ai-object-storage', directory_name=directory, save_path='/Users/hoseobkim/Documents/work/EchossTech/test')
 
 
-    # objectResponse = get_object_list_directory(bucket_name='ai-object-storage', max_key=max_key,
-    #                                            directory_path=directory, extension=exts)
-    #
-    # print(objectResponse)
-    #
-    # downloadObject('ai-object-storage', 'shrimp/2021-07-28/tomato_g_test2.jpg', '/Users/hoseobkim/Documents/work/EchossTech/tomato_g_test2.jpg')
+# objectResponse = get_object_list_directory(bucket_name='ai-object-storage', max_key=max_key,
+#                                            directory_path=directory, extension=exts)
+#
+# print(objectResponse)
+#
+# downloadObject('ai-object-storage', 'shrimp/2021-07-28/tomato_g_test2.jpg', '/Users/hoseobkim/Documents/work/EchossTech/tomato_g_test2.jpg')
