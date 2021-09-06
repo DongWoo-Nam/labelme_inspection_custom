@@ -128,6 +128,8 @@ def get_object_list_directory(bucket,s3_prefix, pattern=None, after_ts=0):
 # 오브젝트 다운로드
 def download_object(object_name, save_path,s3bucket):
     file_path = os.path.dirname(object_name)
+    if os.path.isfile(save_path+object_name):
+        return
     if not os.path.exists(save_path+file_path):
         os.makedirs(save_path+file_path)
     s3bucket.download_file(object_name,save_path+object_name)
@@ -157,7 +159,7 @@ def upload_object(bucket_name, local_file_path, directory):
     s3bucket = s3.Bucket(bucket_name)
     # s3_up.put_object(Bucket=bucket_name, Key=directory)
     # 업로드할 오브젝트명 설정
-    object_name = directory + "/" + local_file_path.rsplit(os.path.sep)[-1]
+    object_name = local_file_path.split("labelme\\")[1].replace(os.path.sep, "/")  # 흰다리 새우에서만 사용 가능
     # 파일 업로드
     print("local_file_path={}".format(local_file_path))
     print("bucket_name={}".format(bucket_name))

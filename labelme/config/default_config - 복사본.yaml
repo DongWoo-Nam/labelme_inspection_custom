@@ -20,12 +20,12 @@ shift_auto_shape_color: 0
 label_colors: null
 
 # by hw1230
-down_bucket_name: process02
-down_directory:  shrimp/type01/
+down_bucket_name: ai-object-storage
+down_directory: labelme/download/
 down_access_key: DgEJlJmCpUpELcRyAj9F
 down_access_token: axcixs48W3YsXxCNmCaYSspUEOHzkXJW0u0b7gmi
-up_bucket_name: process03
-up_directory: shrimp/type01/
+up_bucket_name: ai-object-storage
+up_directory: labelme/upload/
 up_access_key: DgEJlJmCpUpELcRyAj9F
 up_access_token: axcixs48W3YsXxCNmCaYSspUEOHzkXJW0u0b7gmi
 
