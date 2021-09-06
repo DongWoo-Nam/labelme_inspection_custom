@@ -73,8 +73,6 @@ up_directory = conf["up_directory"]
 up_access_key = conf["up_access_key"]
 up_access_token = conf["up_access_token"]
 
-
-
 # FIXME
 # - [medium] Set max zoom value to something big enough for FitWidth/Window
 
