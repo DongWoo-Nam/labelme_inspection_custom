@@ -42,28 +42,18 @@ CONFFILE = None
 if getattr(sys, 'frozen', False):  # pyinstaller로 빌드하면 path가 꼬임. 이렇게 걸어주면 빌드 했을 때, 실행시킨 경로를 얻을 수 있음
     APPLICATION_EXE_DIR = os.path.dirname(sys.executable)
     APPLICATION_DATA_DIR = sys._MEIPASS
-    if os.path.isfile(APPLICATION_EXE_DIR + '/test.yaml'):
-        CONFFILE = APPLICATION_EXE_DIR + '/test.yaml'
+    if os.path.isfile(APPLICATION_EXE_DIR + '/config.yaml'):
+        CONFFILE = APPLICATION_EXE_DIR + '/config.yaml'
 else:
     APPLICATION_EXE_DIR = os.path.dirname(os.path.abspath(__file__))
     APPLICATION_DATA_DIR = APPLICATION_EXE_DIR
 
-# added by khlee - 작업자별로 config파일을 다르게 설정
-CONFFILE = None
-if getattr(sys,'frozen',False): # pyinstaller로 빌드하면 path가 꼬임. 이렇게 걸어주면 빌드 했을 때, 실행시킨 경로를 얻을 수 있음
-    APPLICATION_EXE_DIR = os.path.dirname(sys.executable)
-    APPLICATION_DATA_DIR = sys._MEIPASS
-    if os.path.isfile(APPLICATION_EXE_DIR+'/test.yaml'):
-        CONFFILE = APPLICATION_EXE_DIR+'/test.yaml'
-else:
-    APPLICATION_EXE_DIR = os.path.dirname(os.path.abspath(__file__))
-    APPLICATION_DATA_DIR = APPLICATION_EXE_DIR
 
 
 # added by hw1230
 # conf = get_config()
 conf = get_config(CONFFILE) # added by khlee
-local_depository = os.path.expanduser('~') + os.path.sep + "Documents" + os.path.sep + "labelme"
+local_depository = os.path.expanduser('~') + os.path.sep + "Documents" + os.path.sep + "labelme" + os.path.sep
 down_bucket_name = conf["down_bucket_name"]
 down_directory = conf["down_directory"]
 down_access_key = conf["down_access_key"]
