@@ -6,6 +6,10 @@
 /*.egg-info/
 
 *.py[cdo]
+*.npy
+*.include
 
 .DS_Store
 .idea/
+/examples/
+/labelme/sample/
