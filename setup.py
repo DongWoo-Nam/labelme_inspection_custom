@@ -29,6 +29,7 @@ def get_install_requires():
     assert PY3 or PY2
 
     install_requires = [
+        "boto3==1.6.19",
         "imgviz>=0.11.0",
         "matplotlib<3.3",  # for PyInstaller
         "numpy",
