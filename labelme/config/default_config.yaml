@@ -21,15 +21,15 @@ label_colors: null
 
 # by hw1230
 down_bucket_name: phenotyping
-down_directory: RDA/calibration/bean/210617/SIDE/
-#down_directory:
-#  - RDA/calibration/bean/210617/SIDE/
-#  - RDA/calibration/bean/210618/SIDE/
-#  - RDA/calibration/bean/210621/SIDE/
-#  - RDA/calibration/bean/210622/SIDE/
-#  - RDA/calibration/bean/210625/SIDE/
-#  - RDA/calibration/bean/210626/SIDE/
-#  - RDA/calibration/bean/210629/SIDE/
+#down_directory: RDA/calibration/bean/210617/SIDE/
+down_directory:
+  - RDA/calibration/bean/210617/SIDE/
+  - RDA/calibration/bean/210618/SIDE/
+  - RDA/calibration/bean/210621/SIDE/
+  - RDA/calibration/bean/210622/SIDE/
+  - RDA/calibration/bean/210625/SIDE/
+  - RDA/calibration/bean/210626/SIDE/
+  - RDA/calibration/bean/210629/SIDE/
 down_access_key: 31020734F48340A08694
 down_access_token: 23EB7EACCD76371BBA88487F9BEB5CDEB00BC08E
 up_bucket_name: phenotyping-anno
