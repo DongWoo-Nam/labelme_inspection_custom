@@ -132,24 +132,25 @@ def get_all_keys(**args):
 
 # 오브젝트 다운로드
 def download_object_by_client(bucket_name, object_name, save_path):
-    file_path = os.path.dirname(object_name)
-    if os.path.isfile(save_path + object_name):
-        return
+    file_path, file_name = os.path.split(object_name)
     if not os.path.exists(save_path + file_path):
         os.makedirs(save_path + file_path)
+    if (os.path.isfile(save_path + object_name)) | (file_name+".bak" in os.listdir(save_path + file_path)):  # 작업 완료 파일 재 다운로드 방지 by dwnam
+        return
     s3_down.download_file(bucket_name, object_name, save_path + object_name)
+    print("Downloading object : %s" % object_name)
 
 
 # 오브젝트 다운로드
 def download_object(object_name, save_path, s3bucket):
-    file_path = os.path.dirname(object_name)
-    print("Downloading object : %s" % object_name)
-
-    if os.path.isfile(save_path + object_name):
-        return
+    file_path, file_name = os.path.split(object_name)
     if not os.path.exists(save_path + file_path):
         os.makedirs(save_path + file_path)
+    if (os.path.isfile(save_path + object_name)) | (file_name+".bak" in os.listdir(save_path + file_path)):  # 작업 완료 파일 재 다운로드 방지 by dwnam
+        return
+
     s3bucket.download_file(object_name, save_path + object_name)
+    print("Downloading object : %s" % object_name)
 
 
 # 디렉토리 다운로드(client 사용)
