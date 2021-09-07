@@ -2139,7 +2139,10 @@ class MainWindow(QtWidgets.QMainWindow):
         bucket_download_directory = down_directory
 
         try:
-            osh.download_directory(down_bucket_name, bucket_download_directory, local_depository, self.login_id)
+            if type(bucket_download_directory) is list:
+                osh.download_directory_by_client(down_bucket_name, bucket_download_directory, local_depository, self.login_id)
+            else:
+                osh.download_directory(down_bucket_name, bucket_download_directory, local_depository, self.login_id)
 
         except Exception as E:
             QMessageBox.warning(self, "", str(E), QMessageBox.Ok)
