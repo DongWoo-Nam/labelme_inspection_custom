@@ -1,12 +1,10 @@
+import os
 from typing import List, Any
 
 import boto3
-import os
-
-from qtpy import QtCore
-from qtpy.QtCore import Qt
-from qtpy import QtGui
+from IPython.external.qt_for_kernel import QtCore
 from qtpy import QtWidgets
+from qtpy.QtCore import Qt
 
 import app
 
@@ -19,6 +17,12 @@ region_name = 'kr-standard'
 # access_key = 'DgEJlJmCpUpELcRyAj9F'
 # access_token = 'axcixs48W3YsXxCNmCaYSspUEOHzkXJW0u0b7gmi'
 
+aws_session = boto3.Session(
+    aws_access_key_id=app.down_access_key, aws_secret_access_key=app.down_access_token
+)
+
+s3_resource = aws_session.resource('s3', endpoint_url=endpoint_url)
+
 s3_down = boto3.client(service_name, aws_access_key_id=app.down_access_key, aws_secret_access_key=app.down_access_token,
                        endpoint_url=endpoint_url)
 s3_up = boto3.client(service_name, aws_access_key_id=app.up_access_key, aws_secret_access_key=app.up_access_token,
@@ -30,20 +34,71 @@ def get_bucket_list():
     return s3_down.list_buckets()
 
 
-# 버킷 내에 오브젝트 목록 가져오기
+def get_object_list_directory_all(bucket_name, prefix='/', extension: object = None):
+    bucket = s3_resource.Bucket(bucket_name)
+
+    # 확장자가 지정이 안되었을 경우 기본 확장자 설정
+    if extension is None:
+        extension = []
+
+    items = []
+    for directory in app.down_directory:
+        dir = directory + prefix + '/'
+        for obj in bucket.objects.filter(Prefix=dir):
+            try:
+                if len(extension) != 0 and (obj.key.rsplit('.')[1] not in extension):
+                    continue
+                items.append(obj.key)
+            except Exception:
+                continue
+    return items
+
+
+# 버킷 내에 오브젝트 목록 가져오기 limit 300
 def get_object_list(bucket_name, max_key=300):
     object_response = s3_down.list_objects(Bucket=bucket_name, MaxKeys=max_key)
     return object_response.get('Contents')
 
 
 # 디렉토리 내에 오브젝트 목록 가져오기 (확장자 지정)
-def get_object_list_directory(bucket_name: str, directory_path: str, max_key: int = 300, extension: object = None):
+def get_object_list_directory(bucket_name: str, directory_path: str, login_id: str, max_key: int = 10000,
+                              extension: object = None):
     # 확장자가 지정이 안되었을 경우 기본 확장자 설정
     if extension is None:
         extension = []
 
-    object_response = s3_down.list_objects(Bucket=bucket_name, MaxKeys=max_key)
-    contents = object_response.get('Contents')
+    # paginator = s3_down.get_paginator('list_multipart_uploads')
+    # paginator = s3_down.get_paginator('list_objects')
+    paginator = s3_down.get_paginator('list_objects_v2')
+    # paginator = s3_down.get_paginator('list_parts')
+    # paginator = s3_down.get_paginator('list_object_versions')
+    # response_iterator = paginator.paginate(
+    #     Bucket=bucket_name,
+    #     Prefix=login_id
+    # )
+    # response_iterator = paginator.paginate(
+    #     Bucket=bucket_name,
+    #     Prefix=login_id,
+    #     Delimiter='/',
+    #     EncodingType='url',
+    #     PaginationConfig={
+    #         'MaxItems': 1000,
+    #         'PageSize': 1000
+    #     }
+    # )
+
+    response_iterator = get_all_keys(Bucket=bucket_name, Prefix=login_id);
+
+    print(response_iterator)
+    cots: List[Any] = []
+    for page in response_iterator:
+        print(page.Contents)
+        for content in page['Contents']:
+            cots.append(content)
+            print(content)
+
+    # object_response = s3_down.list_objects(Bucket=bucket_name, MaxKeys=max_key)
+    # contents = object_response.get('Contents')
 
     # 디렉토리내 오브젝트를 담을 객체 생성
     items: list[Any] = []
@@ -52,7 +107,9 @@ def get_object_list_directory(bucket_name: str, directory_path: str, max_key: in
     # 현재 디렉토리 내의 서브디렉토리 담을 객체 생성
     sub_directory: list[Any] = []
 
-    for item in contents:
+    print('size of contents : %i' % len(cots))
+    for item in cots:
+        print(item.get('Key'))
         file_name = item.get('Key')
         if directory_path not in file_name:
             pass
@@ -61,15 +118,15 @@ def get_object_list_directory(bucket_name: str, directory_path: str, max_key: in
             delete_directory_path = item.get('Key').replace(directory_path + '/', '')
 
             if item.get('Size') == 0:  # 서브 디렉토리 할당
-                item['DirectoryName'] = delete_directory_path.rsplit('/')[0]
+                item['DirectoryName'] = delete_directory_path.rstrip('/')
                 if len(item['DirectoryName']) > 0:
                     item['Key'] = file_name.rstrip('/')
                     sub_directory.append(item)
-            else:  # 오브젝트 객체 할당
+            elif item.get('Key').find(login_id) > 0:  # 오브젝트 객체 할당
                 path_segments = delete_directory_path.rsplit('/')
                 # 현재 디렉토리에 오브젝트인지 체크
-                if len(path_segments) > 1:
-                    continue
+                # if len(path_segments) > 1:
+                #     continue
                 # 지정된 확장명의 파일인지 체크
                 if len(extension) != 0 and item.get('Key').rsplit('.')[1] not in extension:
                     continue
@@ -81,6 +138,28 @@ def get_object_list_directory(bucket_name: str, directory_path: str, max_key: in
         'subdirectory': sub_directory,
         'items': items
     }
+
+
+def get_all_keys(**args):
+    # 전체 파일목록(key) 반환용 array
+    keys = []
+
+    # 1000 개씩 반환되는 list_objects_v2의 결과 paging 처리를 위한 paginator 선언
+    # page_iterator = s3_down.get_paginator("list_objects_v2")
+    page_iterator = s3_down.list_objects_v2()
+
+
+    for page in page_iterator.paginate(**args):
+        try:
+            contents = page["Contents"]
+            print(contents)
+        except KeyError:
+            break
+
+        for item in contents:
+            keys.append(item["Key"])
+
+    return keys
 
 
 # 오브젝트 다운로드
@@ -95,33 +174,29 @@ def download_directory(bucket_name, directory_name, save_path, login_id):
 
     print('directory: %s' % directory_name)
 
-    objectResponse = get_object_list_directory(bucket_name=bucket_name, directory_path=directory_name)
+    items = get_object_list_directory_all(bucket_name=bucket_name, prefix=login_id, extension=['png', 'jpeg', 'jpg'])
 
-    subdirectories = objectResponse.get('subdirectory')
-    if len(subdirectories) > 0 and (len(subdirectories) == 1 and not subdirectories[1].get('Key') == directory_name):
-        for subdirectory in subdirectories:
-            print("subdirectory :" + subdirectory.get('Key'))
-            download_directory(bucket_name, subdirectory.get('Key').rstrip('/'), save_path, login_id)
-
-    items = objectResponse.get('items')
-
-    progress = QtWidgets.QProgressDialog("Download files...", '', 0, len(items))
+    total_items = len(items)
+    progress = QtWidgets.QProgressDialog("Download files...", QtCore.QString(), 0, total_items)
+    progress.setWindowTitle("Downloading files...")
     progress.setCancelButton(None)
     progress.setAutoClose(True)
     progress.setWindowModality(Qt.WindowModal)
+    progress.setMinimumDuration(0)
 
     i = 0
     for item in items:
-        print('item: %d key: %s' % (i, item.get('Key')))
-        if item.get('Key').find(login_id) > 0:
-            item_save_path = save_path + '/' + str(item.get('Key').rsplit('/')[-1])
-            # if progress.wasCanceled():
-            #     break
-            # print(item_save_path)
-            download_object(bucket_name=bucket_name, object_name=item.get('Key'), save_path=item_save_path)
+
+        print('item: %d key: %s' % (i, item))
+        item_save_path = save_path + '/' + str(item.rsplit('/')[-1])
+        download_object(bucket_name=bucket_name, object_name=item, save_path=item_save_path)
 
         i = i + 1
-        progress.setValue(i)
+        print('Downloading files...  %s/%s' % (str(progress.value()), str(total_items)))
+        progress.setLabelText = 'Downloading files... ' + str(progress.value()) + '/' + str(total_items)
+        progress.setValue(progress.value() + 1)
+
+
 
 # 오브젝트 업로드
 def upload_object(bucket_name, local_file_path, directory):
