@@ -2,6 +2,7 @@ import os
 from typing import List, Any
 
 import boto3
+from IPython.external.qt_for_kernel import QtCore
 from qtpy import QtWidgets
 from qtpy.QtCore import Qt
 
@@ -35,44 +36,21 @@ def get_bucket_list():
 
 def get_object_list_directory_all(bucket_name, prefix='/', extension: object = None):
     bucket = s3_resource.Bucket(bucket_name)
-    # for object in bucket.objects.filter(Prefix=prefix):
-    #     print(object.key)
-    # return bucket.objects.filter(Prefix=prefix)
-    # return (_.key for _ in bucket.objects.all())
 
-    # for bucket in s3.buckets.all():
     # 확장자가 지정이 안되었을 경우 기본 확장자 설정
     if extension is None:
         extension = []
 
     items = []
-
-    dirs = [
-        'RDA/calibration/bean/210617/SIDE/' + prefix + '/',
-        'RDA/calibration/bean/210618/SIDE/' + prefix + '/',
-        'RDA/calibration/bean/210621/SIDE/' + prefix + '/',
-        'RDA/calibration/bean/210622/SIDE/' + prefix + '/',
-        'RDA/calibration/bean/210625/SIDE/' + prefix + '/',
-        'RDA/calibration/bean/210626/SIDE/' + prefix + '/',
-        'RDA/calibration/bean/210629/SIDE/' + prefix + '/'
-    ]
-    #Parameter validation failed: Unknown parameter in input: "Filter", must be one of: Bucket, Delimiter, EncodingType, Marker, MaxKeys, Prefix, RequestPayer
-    # bucket.objects.filters()
-    for dir in dirs:
+    for directory in app.down_directory:
+        dir = directory + prefix + '/'
         for obj in bucket.objects.filter(Prefix=dir):
-            # if len(extension) != 0 and obj.key.rsplit('.')[1] not in extension:
-            #     continue
-            items.append(obj.key)
-
-    print('items: %s' % items)
-    # for obj in bucket.objects.filter(Prefix='/RDA/calibration/bean'):
-    # # for obj in bucket.objects.filter(Prefix=filters):
-    #     print('{0}:{1}'.format(bucket.name, obj.key))
-    #
-    # objs = bucket.objects.all()
-    # for obj in objs:
-    #     if obj.key.find(prefix) > -1:
-    #         items.append(obj.key)
+            try:
+                if len(extension) != 0 and (obj.key.rsplit('.')[1] not in extension):
+                    continue
+                items.append(obj.key)
+            except Exception:
+                continue
     return items
 
 
@@ -196,38 +174,28 @@ def download_directory(bucket_name, directory_name, save_path, login_id):
 
     print('directory: %s' % directory_name)
 
-    objectResponse = get_object_list_directory_all(bucket_name=bucket_name, prefix=login_id, extension=['png'])
-    # objectResponse = get_object_list_directory(bucket_name=bucket_name, directory_path=directory_name, login_id=login_id)
+    items = get_object_list_directory_all(bucket_name=bucket_name, prefix=login_id, extension=['png', 'jpeg', 'jpg'])
 
-    print(objectResponse)
-    for objectSummary in objectResponse:
-        print('objectSummary: %s' % objectSummary)
-    #
-    # subdirectories = objectResponse.get('subdirectory')
-    # if len(subdirectories) > 0 and (len(subdirectories) == 1 and not subdirectories[1].get('Key') == directory_name):
-    #     for subdirectory in subdirectories:
-    #         print("subdirectory :" + subdirectory.get('Key'))
-    #         download_directory(bucket_name, subdirectory.get('Key').rstrip('/'), save_path, login_id)
-    #
-    items = objectResponse.get('items')
-
-    progress = QtWidgets.QProgressDialog("Download files...", '', 0, len(objectResponse))
+    total_items = len(items)
+    progress = QtWidgets.QProgressDialog("Download files...", QtCore.QString(), 0, total_items)
+    progress.setWindowTitle("Downloading files...")
     progress.setCancelButton(None)
     progress.setAutoClose(True)
     progress.setWindowModality(Qt.WindowModal)
+    progress.setMinimumDuration(0)
 
     i = 0
     for item in items:
-        print('item: %d key: %s' % (i, item.get('Key')))
-        if item.get('Key').find(login_id) > 0:
-            item_save_path = save_path + '/' + str(item.get('Key').rsplit('/')[-1])
-            # if progress.wasCanceled():
-            #     break
-            # print(item_save_path)
-            download_object(bucket_name=bucket_name, object_name=item.get('Key'), save_path=item_save_path)
+
+        print('item: %d key: %s' % (i, item))
+        item_save_path = save_path + '/' + str(item.rsplit('/')[-1])
+        download_object(bucket_name=bucket_name, object_name=item, save_path=item_save_path)
 
         i = i + 1
-        progress.setValue(i)
+        print('Downloading files...  %s/%s' % (str(progress.value()), str(total_items)))
+        progress.setLabelText = 'Downloading files... ' + str(progress.value()) + '/' + str(total_items)
+        progress.setValue(progress.value() + 1)
+
 
 
 # 오브젝트 업로드
