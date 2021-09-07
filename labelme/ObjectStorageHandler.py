@@ -1,14 +1,12 @@
+import os
 from typing import List, Any
 
 import boto3
-import os
-
-from qtpy import QtCore
-from qtpy.QtCore import Qt
-from qtpy import QtGui
+from IPython.external.qt_for_kernel import QtCore
 from qtpy import QtWidgets
+from qtpy.QtCore import Qt
 
-# import app
+import app
 
 # from app import down_access_key, down_access_token
 # from app import up_access_key, up_access_token
@@ -16,13 +14,53 @@ from qtpy import QtWidgets
 service_name = 's3'
 endpoint_url = 'https://kr.object.ncloudstorage.com'
 region_name = 'kr-standard'
-access_key = 'DgEJlJmCpUpELcRyAj9F'
-access_token = 'axcixs48W3YsXxCNmCaYSspUEOHzkXJW0u0b7gmi'
+# access_key = 'DgEJlJmCpUpELcRyAj9F'
+# access_token = 'axcixs48W3YsXxCNmCaYSspUEOHzkXJW0u0b7gmi'
+
+aws_session = boto3.Session(
+    aws_access_key_id=app.down_access_key, aws_secret_access_key=app.down_access_token
+)
+
+s3_resource = aws_session.resource('s3', endpoint_url=endpoint_url)
+
+s3_down = boto3.client(service_name, aws_access_key_id=app.down_access_key, aws_secret_access_key=app.down_access_token,
+                       endpoint_url=endpoint_url)
+s3_up = boto3.client(service_name, aws_access_key_id=app.up_access_key, aws_secret_access_key=app.up_access_token,
+                     endpoint_url=endpoint_url)
+
+
+# 버킷 목록 가져오기
+def get_bucket_list():
+    return s3_down.list_buckets()
 
 
 s3 = boto3.Session(region_name='kr-standard',
                                      aws_access_key_id = access_key,
                                      aws_secret_access_key = access_token).resource('s3',endpoint_url = 'https://kr.object.ncloudstorage.com') #
+def get_object_list_directory_all(bucket_name, prefix='/', extension: object = None):
+    bucket = s3_resource.Bucket(bucket_name)
+
+    # 확장자가 지정이 안되었을 경우 기본 확장자 설정
+    if extension is None:
+        extension = []
+
+    items = []
+    for directory in app.down_directory:
+        dir = directory + prefix + '/'
+        for obj in bucket.objects.filter(Prefix=dir):
+            try:
+                if len(extension) != 0 and (obj.key.rsplit('.')[1] not in extension):
+                    continue
+                items.append(obj.key)
+            except Exception:
+                continue
+    return items
+
+
+# 버킷 내에 오브젝트 목록 가져오기 limit 300
+def get_object_list(bucket_name, max_key=300):
+    object_response = s3_down.list_objects(Bucket=bucket_name, MaxKeys=max_key)
+    return object_response.get('Contents')
 
 # s3_down = s3.resource('s3',endpoint_url = 'https://kr.object.ncloudstorage.com') #
 # s3_up = s3.resource('s3',endpoint_url = 'https://kr.object.ncloudstorage.com') #
@@ -36,8 +74,7 @@ def isBlank(str):
     if str and str.strip():
         return False
     return True
-
-#디렉터리 내 오브젝트 조회
+# 디렉토리 내에 오브젝트 목록 가져오기 (확장자 지정)
 def get_object_list_directory(bucket,s3_prefix, pattern=None, after_ts=0):
     global s3
     s3bucket = s3.Bucket(bucket)
@@ -65,64 +102,31 @@ def get_object_list_directory(bucket,s3_prefix, pattern=None, after_ts=0):
     }
 
 
+def get_all_keys(**args):
+    # 전체 파일목록(key) 반환용 array
+    keys = []
 
-# # 버킷 목록 가져오기
-# def get_bucket_list():
-#     return s3_down.list_buckets()
-#
-#
-# # 버킷 내에 오브젝트 목록 가져오기
-# def get_object_list(bucket_name, max_key=300):
-#     object_response = s3_down.list_objects(Bucket=bucket_name, MaxKeys=max_key)
-#     return object_response.get('Contents')
+    # 1000 개씩 반환되는 list_objects_v2의 결과 paging 처리를 위한 paginator 선언
+    # page_iterator = s3_down.get_paginator("list_objects_v2")
+    page_iterator = s3_down.list_objects_v2()
 
 
-# # 디렉토리 내에 오브젝트 목록 가져오기 (확장자 지정)
-# def get_object_list_directory(bucket_name: str, directory_path: str, max_key: int = 300, extension: object = None):
-#     # 확장자가 지정이 안되었을 경우 기본 확장자 설정
-#     if extension is None:
-#         extension = []
-#
-#     # object_response = s3_down.list_objects(Bucket=bucket_name, MaxKeys=max_key)
-#     # contents = object_response.get('Contents')
-#     contents = s3_list(bucket_name,directory_path)
-#
-#     # 디렉토리내 오브젝트를 담을 객체 생성
-#     items: list[Any] = []
-#     # 현재 디렉토리명 할당
-#     current_directory: str = ''
-#     # 현재 디렉토리 내의 서브디렉토리 담을 객체 생성
-#     sub_directory: list[Any] = []
-#
-#     for item in contents:
-#         file_name = item.get('Key')
-#         if directory_path not in file_name:
-#             pass
-#         else:
-#             current_directory = directory_path
-#             delete_directory_path = item.get('Key').replace(directory_path + '/', '')
-#
-#             if item.get('Size') == 0:  # 서브 디렉토리 할당
-#                 item['DirectoryName'] = delete_directory_path.rsplit('/')[0]
-#                 if len(item['DirectoryName']) > 0:
-#                     item['Key'] = file_name.rstrip('/')
-#                     sub_directory.append(item)
-#             else:  # 오브젝트 객체 할당
-#                 path_segments = delete_directory_path.rsplit('/')
-#                 # 현재 디렉토리에 오브젝트인지 체크
-#                 if len(path_segments) > 1:
-#                     continue
-#                 # 지정된 확장명의 파일인지 체크
-#                 if len(extension) != 0 and item.get('Key').rsplit('.')[1] not in extension:
-#                     continue
-#
-#                 items.append(item)
-#
-#     return {
-#         'directory': current_directory,
-#         'subdirectory': sub_directory,
-#         'items': items
-#     }
+    for page in page_iterator.paginate(**args):
+        try:
+            contents = page["Contents"]
+            print(contents)
+        except KeyError:
+            break
+
+        for item in contents:
+            keys.append(item["Key"])
+
+    return keys
+
+
+# 오브젝트 다운로드
+def download_object(bucket_name, object_name, save_path):
+    s3_down.download_file(bucket_name, object_name, save_path)
 
 
 # 오브젝트 다운로드
@@ -133,6 +137,38 @@ def download_object(object_name, save_path,s3bucket):
     if not os.path.exists(save_path+file_path):
         os.makedirs(save_path+file_path)
     s3bucket.download_file(object_name,save_path+object_name)
+
+# 디렉토리 다운로드
+def download_directory(bucket_name, directory_name, save_path, login_id):
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    s3bucket = s3.Bucket(bucket_name)
+    print('directory: %s' % directory_name)
+
+    items = get_object_list_directory_all(bucket_name=bucket_name, prefix=login_id, extension=['png', 'jpeg', 'jpg'])
+
+    total_items = len(items)
+    progress = QtWidgets.QProgressDialog("Download files...", QtCore.QString(), 0, total_items)
+    progress.setWindowTitle("Downloading files...")
+    progress.setCancelButton(None)
+    progress.setAutoClose(True)
+    progress.setWindowModality(Qt.WindowModal)
+    progress.setMinimumDuration(0)
+
+    i = 0
+    for item in items:
+
+        print('item: %d key: %s' % (i, item))
+        item_save_path = save_path + '/' + str(item.rsplit('/')[-1])
+        download_object(bucket_name=bucket_name, object_name=item, save_path=item_save_path)
+
+        i = i + 1
+        print('Downloading files...  %s/%s' % (str(progress.value()), str(total_items)))
+        progress.setLabelText = 'Downloading files... ' + str(progress.value()) + '/' + str(total_items)
+        progress.setValue(progress.value() + 1)
+
+
+
 
 # 디렉토리 다운로드
 def download_directory(bucket_name, directory_name, save_path, login_id):
@@ -166,6 +202,20 @@ def upload_object(bucket_name, local_file_path, directory):
     print("object_name={}".format(object_name))
     # s3_up.upload_file(local_file_path, bucket_name, object_name)
     s3bucket.upload_file(local_file_path,object_name)
+
+
+
+# 오브젝트 업로드
+def upload_object(bucket_name, local_file_path, directory):
+    # 디렉토리 생성(디렉토리가 존재하지 않으면 생성)
+    s3_up.put_object(Bucket=bucket_name, Key=directory)
+    # 업로드할 오브젝트명 설정
+    object_name = directory + "/" + local_file_path.rsplit(os.path.sep)[-1]
+    # 파일 업로드
+    print("local_file_path={}".format(local_file_path))
+    print("bucket_name={}".format(bucket_name))
+    print("object_name={}".format(object_name))
+    s3_up.upload_file(local_file_path, bucket_name, object_name)
 
 
 # 디렉토리 업로드
