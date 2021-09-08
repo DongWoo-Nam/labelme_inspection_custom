@@ -787,6 +787,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # deleteFile,
             None,
             createMode,
+            createRectangleMode,  # rectangle 버트 추가 210908 by dwnam
             editMode,
             copy,
             delete,
