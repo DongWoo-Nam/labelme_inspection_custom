@@ -205,7 +205,7 @@ def upload_object(bucket_name, local_file_path, directory):
     s3bucket = s3.Bucket(bucket_name)
     # s3_up.put_object(Bucket=bucket_name, Key=directory)
     # 업로드할 오브젝트명 설정
-    object_name = local_file_path.split("labelme" + os.path.sep)[1].replace(os.path.sep, "/")  # 흰다리 새우에서만 사용 가능
+    object_name = local_file_path.split(r'labelme\\')[1].replace(os.path.sep, "/")  # 흰다리 새우 수정 by dwnam 210913
     # 파일 업로드
     print("local_file_path={}".format(local_file_path))
     print("bucket_name={}".format(bucket_name))
@@ -219,7 +219,7 @@ def upload_object_by_client(bucket_name, local_file_path, directory):
     # 디렉토리 생성(디렉토리가 존재하지 않으면 생성)
     s3_up.put_object(Bucket=bucket_name, Key=directory)
     # 업로드할 오브젝트명 설정
-    object_name = local_file_path.split("labelme" + os.path.sep)[1].replace(os.path.sep, "/")  # 흰다리
+    object_name = local_file_path.split(r'labelme\\')[1].replace(os.path.sep, "/")  # 피노타이핑 수정 by dwnam 210913
     # object_name = directory + "/" + local_file_path.rsplit(os.path.sep)[-1]
     # 파일 업로드
     print("local_file_path={}".format(local_file_path))

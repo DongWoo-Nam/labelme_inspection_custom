@@ -53,7 +53,7 @@ else:
 # added by hw1230
 # conf = get_config()
 conf = get_config(CONFFILE) # added by khlee
-local_depository = "C:/labelme/"  # 저장 경로 수정 by dwnam
+local_depository = r"C:\\labelme\\"  # 저장 경로 수정 by dwnam 210913
 # local_depository = os.path.expanduser('~') + os.path.sep + "Documents" + os.path.sep + "labelme" + os.path.sep
 down_bucket_name = conf["down_bucket_name"]
 down_directory = conf["down_directory"]
