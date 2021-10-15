@@ -20,22 +20,30 @@ shift_auto_shape_color: 0
 label_colors: null
 
 # by hw1230
-down_bucket_name: phenotyping
-#down_directory: RDA/calibration/bean/210617/SIDE/
-down_directory:
-  - RDA/calibration/bean/210617/SIDE/
-  - RDA/calibration/bean/210618/SIDE/
-  - RDA/calibration/bean/210621/SIDE/
-  - RDA/calibration/bean/210622/SIDE/
-  - RDA/calibration/bean/210625/SIDE/
-  - RDA/calibration/bean/210626/SIDE/
-  - RDA/calibration/bean/210629/SIDE/
-down_access_key: 31020734F48340A08694
-down_access_token: 23EB7EACCD76371BBA88487F9BEB5CDEB00BC08E
-up_bucket_name: phenotyping-anno
-up_directory: RDA/calibration/
-up_access_key: 31020734F48340A08694
-up_access_token: 23EB7EACCD76371BBA88487F9BEB5CDEB00BC08E
+#down_bucket_name: phenotyping
+##down_directory: RDA/calibration/bean/210617/SIDE/
+#down_directory:
+#  - RDA/calibration/bean/210617/SIDE/
+#  - RDA/calibration/bean/210618/SIDE/
+#  - RDA/calibration/bean/210621/SIDE/
+#  - RDA/calibration/bean/210622/SIDE/
+#  - RDA/calibration/bean/210625/SIDE/
+#  - RDA/calibration/bean/210626/SIDE/
+#  - RDA/calibration/bean/210629/SIDE/
+#down_access_key: 31020734F48340A08694
+#down_access_token: 23EB7EACCD76371BBA88487F9BEB5CDEB00BC08E
+#up_bucket_name: phenotyping-anno
+#up_directory: RDA/calibration/
+#up_access_key: 31020734F48340A08694
+#up_access_token: 23EB7EACCD76371BBA88487F9BEB5CDEB00BC08E
+down_bucket_name: process02
+down_directory:  shrimp/type02/
+down_access_key: DDE3AB0B1B56C09101A8
+down_access_token: 1425572A5F7D85C9F37A679B7738F1FBB9F6FD62
+up_bucket_name: process03
+up_directory: shrimp/type02/
+up_access_key: DDE3AB0B1B56C09101A8
+up_access_token: 1425572A5F7D85C9F37A679B7738F1FBB9F6FD62
 
 shape:
   # drawing
