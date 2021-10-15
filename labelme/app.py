@@ -8,6 +8,8 @@ import re
 import webbrowser
 import time
 import sys
+import datetime
+
 from PyQt5.QtWidgets import QMessageBox
 
 import imgviz
@@ -355,8 +357,8 @@ class MainWindow(QtWidgets.QMainWindow):
             text="Save With Image Data",
             slot=self.enableSaveImageWithData,
             tip="Save image data in label file",
-            checkable=True,
-            checked=self._config["store_data"],
+            # checkable=True,
+            # checked=self._config["store_data"],
         )
 
         close = action(
@@ -812,12 +814,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.output_file = output_file
         self.output_dir = output_dir
 
+        # other_data = {"endpoint": {"bucket": down_bucket_name, "path": ""}, "reject": {"date": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), "message": ""}}
         # Application state.
         self.image = QtGui.QImage()
         self.imagePath = None
         self.recentFiles = []
         self.maxRecent = 7
-        self.otherData = None
+        self.otherData = None  # other_data
         self.zoom_level = 100
         self.fit_window = False
         self.zoom_values = {}  # key=filename, value=(zoom_mode, zoom_value)
@@ -1309,14 +1312,14 @@ class MainWindow(QtWidgets.QMainWindow):
             flags[key] = flag
         try:
             imagePath = osp.relpath(self.imagePath, osp.dirname(filename))
-            imageData = self.imageData if self._config["store_data"] else None
+            imageData = self.imageData if self._config["store_data"] else None  # None 이미지 해시 값 기본으로 안넣기 위해서는 None으로
             if osp.dirname(filename) and not osp.exists(osp.dirname(filename)):
                 os.makedirs(osp.dirname(filename))
             lf.save(
                 filename=filename,
                 shapes=shapes,
                 imagePath=imagePath,
-                imageData=imageData,
+                imageData= imageData,
                 imageHeight=self.image.height(),
                 imageWidth=self.image.width(),
                 otherData=self.otherData,

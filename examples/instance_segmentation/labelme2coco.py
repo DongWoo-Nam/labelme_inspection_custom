@@ -81,7 +81,46 @@ def main():
 
     out_ann_file = osp.join(args.output_dir, "annotations.json")
     label_files = glob.glob(osp.join(args.input_dir, "*.json"))
-    for image_id, filename in enumerate(label_files):
+
+    label_files_chck = []  # json안의 shapes부분이 비어있는 오류 확인 후 제외
+    import tqdm
+    for label_files_check in tqdm.tqdm(label_files, desc="error file check"):
+        # label_file = labelme.LabelFile(filename=label_files_check)
+        with open(label_files_check, 'r') as f:
+            json_data = json.load(f)
+        x = 0
+        for shape in json_data["shapes"]:
+            points = shape["points"]
+            shape_type = shape["shape_type"]
+            if (len(points) < 3) & (shape_type == "polygon"):
+                x = "error"
+                with open("error.txt", "a+") as f:
+                    f.write(label_files_check)
+                    f.write("\tpolygon인데 points가 3개미만으로 있음")
+                    f.write("\n")
+            elif shape_type == "line":
+                x = "error"
+                with open("error.txt", "a+") as f:
+                    f.write(label_files_check)
+                    f.write("\tshape type이 line")
+                    f.write("\n")
+            elif len(points) < 2:
+                x = "error"
+                with open("error.txt", "a+") as f:
+                    f.write(label_files_check)
+                    f.write("\t점이 2개 미만")
+                    f.write("\n")
+        if len(json_data["shapes"]) == 0:
+            with open("error.txt", "a+") as f:
+                f.write(label_files_check)
+                f.write("\tjson내에 내용 없음")
+                f.write("\n")
+        elif x == "error":
+            pass
+        else:
+            label_files_chck.append(label_files_check)
+
+    for image_id, filename in enumerate(label_files_chck):
         print("Generating dataset from:", filename)
 
         label_file = labelme.LabelFile(filename=filename)
@@ -105,11 +144,16 @@ def main():
 
         masks = {}  # for area
         segmentations = collections.defaultdict(list)  # for segmentation
-        for shape in label_file.shapes:
+        with open(filename, 'r') as f:          ###############
+            json_data = json.load(f)            ###############
+        for shape in json_data["shapes"]:       ###############
+        # for shape in label_file.shapes:
             points = shape["points"]
             label = shape["label"]
-            group_id = shape.get("group_id")
-            shape_type = shape.get("shape_type", "polygon")
+            # group_id = shape.get("group_id")
+            # shape_type = shape.get("shape_type", "polygon")
+            group_id = shape["group_id"]        ###############
+            shape_type = shape["shape_type"]    ###############
             mask = labelme.utils.shape_to_mask(
                 img.shape[:2], points, shape_type
             )
@@ -178,9 +222,8 @@ def main():
                 args.output_dir, "Visualization", base + ".jpg"
             )
             imgviz.io.imsave(out_viz_file, viz)
-
     with open(out_ann_file, "w") as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=4)
 
 
 if __name__ == "__main__":
