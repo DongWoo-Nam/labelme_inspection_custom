@@ -132,24 +132,25 @@ def get_all_keys(**args):
 
 # 오브젝트 다운로드
 def download_object_by_client(bucket_name, object_name, save_path):
-    file_path = os.path.dirname(object_name)
-    if os.path.isfile(save_path + object_name):
-        return
+    file_path, file_name = os.path.split(object_name)
     if not os.path.exists(save_path + file_path):
         os.makedirs(save_path + file_path)
+    if (os.path.isfile(save_path + object_name)) | (file_name+".bak" in os.listdir(save_path + file_path)):  # 작업 완료 파일 재 다운로드 방지 by dwnam
+        return
     s3_down.download_file(bucket_name, object_name, save_path + object_name)
+    print("Downloading object : %s" % object_name)
 
 
 # 오브젝트 다운로드
 def download_object(object_name, save_path, s3bucket):
-    file_path = os.path.dirname(object_name)
-    print("Downloading object : %s" % object_name)
-
-    if os.path.isfile(save_path + object_name):
-        return
+    file_path, file_name = os.path.split(object_name)
     if not os.path.exists(save_path + file_path):
         os.makedirs(save_path + file_path)
+    if (os.path.isfile(save_path + object_name)) | (file_name+".bak" in os.listdir(save_path + file_path)):  # 작업 완료 파일 재 다운로드 방지 by dwnam
+        return
+
     s3bucket.download_file(object_name, save_path + object_name)
+    print("Downloading object : %s" % object_name)
 
 
 # 디렉토리 다운로드(client 사용)
@@ -204,7 +205,7 @@ def upload_object(bucket_name, local_file_path, directory):
     s3bucket = s3.Bucket(bucket_name)
     # s3_up.put_object(Bucket=bucket_name, Key=directory)
     # 업로드할 오브젝트명 설정
-    object_name = local_file_path.split("labelme" + os.path.sep)[1].replace(os.path.sep, "/")  # 흰다리 새우에서만 사용 가능
+    object_name = local_file_path.split(r'labelme\\')[1].replace(os.path.sep, "/")  # 흰다리 새우 수정 by dwnam 210913
     # 파일 업로드
     print("local_file_path={}".format(local_file_path))
     print("bucket_name={}".format(bucket_name))
@@ -218,7 +219,7 @@ def upload_object_by_client(bucket_name, local_file_path, directory):
     # 디렉토리 생성(디렉토리가 존재하지 않으면 생성)
     s3_up.put_object(Bucket=bucket_name, Key=directory)
     # 업로드할 오브젝트명 설정
-    object_name = local_file_path.split("labelme" + os.path.sep)[1].replace(os.path.sep, "/")  # 흰다리
+    object_name = local_file_path.split(r'labelme\\')[1].replace(os.path.sep, "/")  # 피노타이핑 수정 by dwnam 210913
     # object_name = directory + "/" + local_file_path.rsplit(os.path.sep)[-1]
     # 파일 업로드
     print("local_file_path={}".format(local_file_path))
