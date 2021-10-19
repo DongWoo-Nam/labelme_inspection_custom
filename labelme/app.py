@@ -131,7 +131,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         super(MainWindow, self).__init__()
-        self.setWindowTitle(__appname__)
+        self.setWindowTitle(__appname__ + " (검수자용)")
 
         # Whether we need to save or not.
         self.dirty = False
@@ -973,7 +973,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         self.dirty = True
         self.actions.save.setEnabled(True)
-        title = __appname__
+        title = __appname__ + " (검수자용)"
         if self.filename is not None:
             title = "{} - {}*".format(title, self.filename)
         self.setWindowTitle(title)
@@ -987,7 +987,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.createLineMode.setEnabled(True)
         self.actions.createPointMode.setEnabled(True)
         self.actions.createLineStripMode.setEnabled(True)
-        title = __appname__
+        title = __appname__ + " (검수자용)"
         if self.filename is not None:
             title = "{} - {}".format(title, self.filename)
         self.setWindowTitle(title)
