@@ -6,6 +6,8 @@ from IPython.external.qt_for_kernel import QtCore
 from qtpy import QtWidgets
 from qtpy.QtCore import Qt
 
+import json
+
 import app
 
 # from app import down_access_key, down_access_token
@@ -140,13 +142,16 @@ def download_object_by_client(bucket_name, object_name, save_path):
     s3_down.download_file(bucket_name, object_name, save_path + object_name)
     print("Downloading object : %s" % object_name)
 
+def get_bak_file_name(file_name):
+    file_ext = os.path.splitext(file_name)
+    return file_ext[0] + "_" + file_ext[1][1:] + ".bak"
 
 # 오브젝트 다운로드
 def download_object(object_name, save_path, s3bucket):
     file_path, file_name = os.path.split(object_name)
     if not os.path.exists(save_path + file_path):
         os.makedirs(save_path + file_path)
-    if (os.path.isfile(save_path + object_name)) | (file_name+".bak" in os.listdir(save_path + file_path)):  # 작업 완료 파일 재 다운로드 방지 by dwnam
+    if (os.path.isfile(save_path + object_name)) | (get_bak_file_name(file_name) in os.listdir(save_path + file_path)):  # 작업 완료 파일 재 다운로드 방지 by dwnam
         return
 
     s3bucket.download_file(object_name, save_path + object_name)
@@ -158,6 +163,7 @@ def download_directory_by_client(bucket_name, directory_name, save_path, login_i
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     s3bucket = s3.Bucket(bucket_name)
+    print('bucket: %s' % bucket_name)
     print('directory: %s' % directory_name)
 
     items = get_object_list_directory_all(bucket_name=bucket_name, prefix=login_id, extension=['png', 'jpeg', 'jpg'])
@@ -185,6 +191,7 @@ def download_directory(bucket_name, directory_name, save_path, login_id):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     s3bucket = s3.Bucket(bucket_name)
+    print('bucket: %s' % bucket_name)
     print('directory: %s' % directory_name)
 
     items = get_object_list_directory(bucket_name, directory_name, login_id)['items']
@@ -198,6 +205,39 @@ def download_directory(bucket_name, directory_name, save_path, login_id):
         download_object(file, save_path, s3bucket)
         progress.setValue(i)
 
+def download_directory_image(bucket_name, img_bucket_name, directory_name, save_path, login_id):
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    s3bucket = s3.Bucket(bucket_name)
+    s3bucket2 = s3.Bucket(img_bucket_name)
+    # print('bucket: %s' % bucket_name)
+    # print('directory: %s' % directory_name)
+
+    items = get_object_list_directory(bucket_name, directory_name, login_id)['items']
+
+    progress = QtWidgets.QProgressDialog("Download files...", '', 0, len(items))
+    progress.setCancelButton(None)
+    progress.setAutoClose(True)
+    progress.setWindowModality(Qt.WindowModal)
+
+    for i, file in enumerate(items):
+        download_object(file, save_path, s3bucket)
+        if file.endswith("json"):
+            local_json = os.path.join(save_path[:-2], file)
+            # print("bak=" + get_bak_file_name(local_json))
+            if not os.path.exists(get_bak_file_name(local_json)):
+                with open(local_json, 'r') as f:
+                    json_data = json.load(f)
+                img_file = os.path.dirname(file) + "/" + json_data['imagePath']
+                download_object(img_file, save_path, s3bucket2)
+        progress.setValue(i)
+
+def upload_object_simply(bucket_name, src_file_path, tgt_file_path):
+    print("bucket_name={}".format(bucket_name))
+    print("src_file_path={}".format(src_file_path))
+    print("tgt_file_path={}".format(tgt_file_path))
+    s3bucket = s3.Bucket(bucket_name)
+    s3bucket.upload_file(src_file_path, tgt_file_path)
 
 # 오브젝트 업로드
 def upload_object(bucket_name, local_file_path, directory):
@@ -245,6 +285,16 @@ def upload_directory(bucket_name, local_folder_path, directory):
         print(NFE)
     except Exception as E:
         print(E)
+
+def delete_object(bucket_name, object_name):
+    s3bucket = s3.Bucket(bucket_name)
+    s3bucket.delete_objects(Delete={
+        'Objects': [
+            {
+                'Key': object_name
+            }
+        ]
+    })
 
 
 if __name__ == '__main__':
