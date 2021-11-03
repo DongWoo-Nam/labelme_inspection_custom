@@ -299,3 +299,4 @@ def delete_object(bucket_name, object_name):
 
 if __name__ == '__main__':
     download_directory('ai-object-storage', 'labelme/download/01062537326', "C:/Users/admin/Documents/labelme")
+

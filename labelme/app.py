@@ -446,38 +446,38 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Start drawing rectangles"),
             enabled=False,
         )
-        createCircleMode = action(
-            self.tr("Create Circle"),
-            lambda: self.toggleDrawMode(False, createMode="circle"),
-            shortcuts["create_circle"],
-            "objects",
-            self.tr("Start drawing circles"),
-            enabled=False,
-        )
-        createLineMode = action(
-            self.tr("Create Line"),
-            lambda: self.toggleDrawMode(False, createMode="line"),
-            shortcuts["create_line"],
-            "objects",
-            self.tr("Start drawing lines"),
-            enabled=False,
-        )
-        createPointMode = action(
-            self.tr("Create Point"),
-            lambda: self.toggleDrawMode(False, createMode="point"),
-            shortcuts["create_point"],
-            "objects",
-            self.tr("Start drawing points"),
-            enabled=False,
-        )
-        createLineStripMode = action(
-            self.tr("Create LineStrip"),
-            lambda: self.toggleDrawMode(False, createMode="linestrip"),
-            shortcuts["create_linestrip"],
-            "objects",
-            self.tr("Start drawing linestrip. Ctrl+LeftClick ends creation."),
-            enabled=False,
-        )
+        # createCircleMode = action(
+        #     self.tr("Create Circle"),
+        #     lambda: self.toggleDrawMode(False, createMode="circle"),
+        #     shortcuts["create_circle"],
+        #     "objects",
+        #     self.tr("Start drawing circles"),
+        #     enabled=False,
+        # )
+        # createLineMode = action(
+        #     self.tr("Create Line"),
+        #     lambda: self.toggleDrawMode(False, createMode="line"),
+        #     shortcuts["create_line"],
+        #     "objects",
+        #     self.tr("Start drawing lines"),
+        #     enabled=False,
+        # )
+        # createPointMode = action(
+        #     self.tr("Create Point"),
+        #     lambda: self.toggleDrawMode(False, createMode="point"),
+        #     shortcuts["create_point"],
+        #     "objects",
+        #     self.tr("Start drawing points"),
+        #     enabled=False,
+        # )
+        # createLineStripMode = action(
+        #     self.tr("Create LineStrip"),
+        #     lambda: self.toggleDrawMode(False, createMode="linestrip"),
+        #     shortcuts["create_linestrip"],
+        #     "objects",
+        #     self.tr("Start drawing linestrip. Ctrl+LeftClick ends creation."),
+        #     enabled=False,
+        # )
         editMode = action(
             self.tr("Edit Polygons"),
             self.setEditMode,
@@ -699,10 +699,10 @@ class MainWindow(QtWidgets.QMainWindow):
             createMode=createMode,
             editMode=editMode,
             createRectangleMode=createRectangleMode,
-            createCircleMode=createCircleMode,
-            createLineMode=createLineMode,
-            createPointMode=createPointMode,
-            createLineStripMode=createLineStripMode,
+            # createCircleMode=createCircleMode,
+            # createLineMode=createLineMode,
+            # createPointMode=createPointMode,
+            # createLineStripMode=createLineStripMode,
             zoom=zoom,
             zoomIn=zoomIn,
             zoomOut=zoomOut,
@@ -723,11 +723,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 delete,
                 None,
                 undo,
-                undoLastPoint,
-                None,
-                addPointToEdge,
-                None,
-                toggle_keep_prev_mode,
+                # undoLastPoint,
+                # None,
+                # addPointToEdge,
+                # None,
+                # toggle_keep_prev_mode,
             ),
             # menu shown at right click
             menu=(
@@ -742,7 +742,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 copy,
                 delete,
                 undo,
-                undoLastPoint,
+                # undoLastPoint,
                 addPointToEdge,
                 removePoint,
             ),
@@ -750,10 +750,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 close,
                 createMode,
                 createRectangleMode,
-                createCircleMode,
-                createLineMode,
-                createPointMode,
-                createLineStripMode,
+                # createCircleMode,
+                # createLineMode,
+                # createPointMode,
+                # createLineStripMode,
                 editMode,
                 brightnessContrast,
             ),
@@ -765,9 +765,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.menus = utils.struct(
             file=self.menu(self.tr("&File")),
-            # edit=self.menu(self.tr("&Edit")),
+            edit=self.menu(self.tr("&Edit")),
             view=self.menu(self.tr("&View")),
-            help=self.menu(self.tr("&Help")),
+            # help=self.menu(self.tr("&Help")),
             recentFiles=QtWidgets.QMenu(self.tr("Open &Recent")),
             labelList=labelMenu,
         )
@@ -791,7 +791,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 quit,
             ),
         )
-        utils.addActions(self.menus.help, (help,))
+        # utils.addActions(self.menus.help, (help,))
         utils.addActions(
             self.menus.view,
             (
@@ -802,11 +802,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.file_dock.toggleViewAction(),
                 # self.done_dock.toggleViewAction(),  # by hw1230
                 None,
-                # fill_drawing,
-                # None,
-                # hideAll,
-                # showAll,
-                # None,
+                fill_drawing,
+                None,
+                hideAll,
+                showAll,
+                None,
                 zoomIn,
                 zoomOut,
                 zoomOrg,
@@ -840,12 +840,12 @@ class MainWindow(QtWidgets.QMainWindow):
             # save,
             # deleteFile,
             None,
-            # createMode,
-            # createRectangleMode,  # rectangle 버튼 추가 210908 by dwnam
-            # editMode,
-            # copy,
-            # delete,
-            # undo,
+            createMode,
+            createRectangleMode,  # rectangle 버튼 추가 210908 by dwnam
+            editMode,
+            copy,
+            delete,
+            undo,
             brightnessContrast,
             None,
             zoom,
@@ -948,17 +948,17 @@ class MainWindow(QtWidgets.QMainWindow):
         utils.addActions(self.tools, tool)
         self.canvas.menus[0].clear()
         utils.addActions(self.canvas.menus[0], menu)
-        # self.menus.edit.clear()
+        self.menus.edit.clear()
         actions = (
             self.actions.createMode,
             self.actions.createRectangleMode,
-            self.actions.createCircleMode,
-            self.actions.createLineMode,
-            self.actions.createPointMode,
-            self.actions.createLineStripMode,
+            # self.actions.createCircleMode,
+            # self.actions.createLineMode,
+            # self.actions.createPointMode,
+            # self.actions.createLineStripMode,
             self.actions.editMode,
         )
-        # utils.addActions(self.menus.edit, actions + self.actions.editMenu)
+        utils.addActions(self.menus.edit, actions + self.actions.editMenu)
 
     def setDirty(self):
         # Even if we autosave the file, we keep the ability to undo
@@ -983,10 +983,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.save.setEnabled(False)
         self.actions.createMode.setEnabled(True)
         self.actions.createRectangleMode.setEnabled(True)
-        self.actions.createCircleMode.setEnabled(True)
-        self.actions.createLineMode.setEnabled(True)
-        self.actions.createPointMode.setEnabled(True)
-        self.actions.createLineStripMode.setEnabled(True)
+        # self.actions.createCircleMode.setEnabled(True)
+        # self.actions.createLineMode.setEnabled(True)
+        # self.actions.createPointMode.setEnabled(True)
+        # self.actions.createLineStripMode.setEnabled(True)
         title = __appname__ + " (검수자용)"
         if self.filename is not None:
             title = "{} - {}".format(title, self.filename)
@@ -1067,53 +1067,53 @@ class MainWindow(QtWidgets.QMainWindow):
         if edit:
             self.actions.createMode.setEnabled(True)
             self.actions.createRectangleMode.setEnabled(True)
-            self.actions.createCircleMode.setEnabled(True)
-            self.actions.createLineMode.setEnabled(True)
-            self.actions.createPointMode.setEnabled(True)
-            self.actions.createLineStripMode.setEnabled(True)
+            # self.actions.createCircleMode.setEnabled(True)
+            # self.actions.createLineMode.setEnabled(True)
+            # self.actions.createPointMode.setEnabled(True)
+            # self.actions.createLineStripMode.setEnabled(True)
         else:
             if createMode == "polygon":
                 self.actions.createMode.setEnabled(False)
                 self.actions.createRectangleMode.setEnabled(True)
-                self.actions.createCircleMode.setEnabled(True)
-                self.actions.createLineMode.setEnabled(True)
-                self.actions.createPointMode.setEnabled(True)
-                self.actions.createLineStripMode.setEnabled(True)
+                # self.actions.createCircleMode.setEnabled(True)
+                # self.actions.createLineMode.setEnabled(True)
+                # self.actions.createPointMode.setEnabled(True)
+                # self.actions.createLineStripMode.setEnabled(True)
             elif createMode == "rectangle":
                 self.actions.createMode.setEnabled(True)
                 self.actions.createRectangleMode.setEnabled(False)
-                self.actions.createCircleMode.setEnabled(True)
-                self.actions.createLineMode.setEnabled(True)
-                self.actions.createPointMode.setEnabled(True)
-                self.actions.createLineStripMode.setEnabled(True)
+                # self.actions.createCircleMode.setEnabled(True)
+                # self.actions.createLineMode.setEnabled(True)
+                # self.actions.createPointMode.setEnabled(True)
+                # self.actions.createLineStripMode.setEnabled(True)
             elif createMode == "line":
                 self.actions.createMode.setEnabled(True)
                 self.actions.createRectangleMode.setEnabled(True)
-                self.actions.createCircleMode.setEnabled(True)
-                self.actions.createLineMode.setEnabled(False)
-                self.actions.createPointMode.setEnabled(True)
-                self.actions.createLineStripMode.setEnabled(True)
+                # self.actions.createCircleMode.setEnabled(True)
+                # self.actions.createLineMode.setEnabled(False)
+                # self.actions.createPointMode.setEnabled(True)
+                # self.actions.createLineStripMode.setEnabled(True)
             elif createMode == "point":
                 self.actions.createMode.setEnabled(True)
                 self.actions.createRectangleMode.setEnabled(True)
-                self.actions.createCircleMode.setEnabled(True)
-                self.actions.createLineMode.setEnabled(True)
-                self.actions.createPointMode.setEnabled(False)
-                self.actions.createLineStripMode.setEnabled(True)
+                # self.actions.createCircleMode.setEnabled(True)
+                # self.actions.createLineMode.setEnabled(True)
+                # self.actions.createPointMode.setEnabled(False)
+                # self.actions.createLineStripMode.setEnabled(True)
             elif createMode == "circle":
                 self.actions.createMode.setEnabled(True)
                 self.actions.createRectangleMode.setEnabled(True)
-                self.actions.createCircleMode.setEnabled(False)
-                self.actions.createLineMode.setEnabled(True)
-                self.actions.createPointMode.setEnabled(True)
-                self.actions.createLineStripMode.setEnabled(True)
+                # self.actions.createCircleMode.setEnabled(False)
+                # self.actions.createLineMode.setEnabled(True)
+                # self.actions.createPointMode.setEnabled(True)
+                # self.actions.createLineStripMode.setEnabled(True)
             elif createMode == "linestrip":
                 self.actions.createMode.setEnabled(True)
                 self.actions.createRectangleMode.setEnabled(True)
-                self.actions.createCircleMode.setEnabled(True)
-                self.actions.createLineMode.setEnabled(True)
-                self.actions.createPointMode.setEnabled(True)
-                self.actions.createLineStripMode.setEnabled(False)
+                # self.actions.createCircleMode.setEnabled(True)
+                # self.actions.createLineMode.setEnabled(True)
+                # self.actions.createPointMode.setEnabled(True)
+                # self.actions.createLineStripMode.setEnabled(False)
             else:
                 raise ValueError("Unsupported createMode: %s" % createMode)
         self.actions.editMode.setEnabled(not edit)
@@ -1377,7 +1377,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 flags=flags,
             )
             self.labelFile = lf
-            items = self.fileListWidgetList.findItems(
+            items = self.fileListWidgetList[self.tabs.currentIndex()].findItems(
                 self.imagePath, Qt.MatchExactly
             )
             if len(items) > 0:
@@ -1698,6 +1698,8 @@ class MainWindow(QtWidgets.QMainWindow):
         assert not self.image.isNull(), "cannot paint null image"
         self.canvas.scale = 0.01 * self.zoomWidget.value()
         self.canvas.adjustSize()
+        self.canvas.setMinimumHeight(self.canvas.pixmap.height() * self.zoomWidget.value() * 0.01 + 30)
+        self.canvas.setMinimumWidth(self.canvas.pixmap.width() * self.zoomWidget.value() * 0.01 + 30)
         self.canvas.update()
 
     def adjustScale(self, initial=False):
@@ -1708,7 +1710,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def scaleFitWindow(self):
         """Figure out the size of the pixmap to fit the main widget."""
-        e = 2.0  # So that no scrollbars are generated.
+        e = 32.0  # So that no scrollbars are generated.
         w1 = self.centralWidget().width() - e
         h1 = self.centralWidget().height() - e
         a1 = w1 / h1
@@ -1763,7 +1765,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def loadRecent(self, filename):
         if self.mayContinue():
-            self.loadFile(filename)
+            self.loadFile(self.tabs.currentIndex(), filename)
 
     def openPrevImg(self, _value=False):
         keep_prev = self._config["keep_prev"]
@@ -1787,7 +1789,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._config["keep_prev"] = keep_prev
 
-    def openNextImg(self, tabIndex, _value=False, load=True):
+    def openNextImg(self, _value=False, load=True):
         keep_prev = self._config["keep_prev"]
         if Qt.KeyboardModifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
             self._config["keep_prev"] = True
@@ -1836,48 +1838,46 @@ class MainWindow(QtWidgets.QMainWindow):
             self.loadFile(self.tabs.currentIndex(), filename)
 
     def changeOutputDirDialog(self, _value=False):
-        pass
-        # default_output_dir = self.output_dir
-        # if default_output_dir is None and self.filename:
-        #     default_output_dir = osp.dirname(self.filename)
-        # if default_output_dir is None:
-        #     default_output_dir = self.currentPath()
-        #
-        # output_dir = QtWidgets.QFileDialog.getExistingDirectory(
-        #     self,
-        #     self.tr("%s - Save/Load Annotations in Directory") % __appname__,
-        #     default_output_dir,
-        #     QtWidgets.QFileDialog.ShowDirsOnly
-        #     | QtWidgets.QFileDialog.DontResolveSymlinks,
-        # )
-        # output_dir = str(output_dir)
-        #
-        # if not output_dir:
-        #     return
-        #
-        # self.output_dir = output_dir
-        #
-        # self.statusBar().showMessage(
-        #     self.tr("%s . Annotations will be saved/loaded in %s")
-        #     % ("Change Annotations Dir", self.output_dir)
-        # )
-        # self.statusBar().show()
-        #
-        # current_filename = self.filename
-        # self.importDirImages(self.lastOpenDir, load=False)
-        #
-        # if current_filename in self.imageList:
-        #     # retain currently selected file
-        #     self.fileListWidgetList.setCurrentRow(
-        #         self.imageList.index(current_filename)
-        #     )
-        #     self.fileListWidgetList.repaint()
+        default_output_dir = self.output_dir
+        if default_output_dir is None and self.filename:
+            default_output_dir = osp.dirname(self.filename)
+        if default_output_dir is None:
+            default_output_dir = self.currentPath()
+
+        output_dir = QtWidgets.QFileDialog.getExistingDirectory(
+            self,
+            self.tr("%s - Save/Load Annotations in Directory") % __appname__,
+            default_output_dir,
+            QtWidgets.QFileDialog.ShowDirsOnly
+            | QtWidgets.QFileDialog.DontResolveSymlinks,
+        )
+        output_dir = str(output_dir)
+
+        if not output_dir:
+            return
+
+        self.output_dir = output_dir
+
+        self.statusBar().showMessage(
+            self.tr("%s . Annotations will be saved/loaded in %s")
+            % ("Change Annotations Dir", self.output_dir)
+        )
+        self.statusBar().show()
+
+        current_filename = self.filename
+        self.importDirImages(self.lastOpenDir, load=False)
+
+        if current_filename in self.imageList:
+            # retain currently selected file
+            self.fileListWidgetList[self.tabs.currentIndex()].setCurrentRow(
+                self.imageList.index(current_filename)
+            )
+            self.fileListWidgetList[self.tabs.currentIndex()].repaint()
 
     def saveFile(self, _value=False):
-        pass
-        # assert not self.image.isNull(), "cannot save empty image"
-        # if not self.mayContinue():
-        #     return
+        assert not self.image.isNull(), "cannot save empty image"
+        if not self.mayContinue():
+            return
         '''
         if self.labelFile:
             # DL20180323 - overwrite when in directory
@@ -1890,50 +1890,47 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
 
     def saveFileAs(self, _value=False):
-        pass
-        # assert not self.image.isNull(), "cannot save empty image"
-        # self._saveFile(self.saveFileDialog())
+        assert not self.image.isNull(), "cannot save empty image"
+        self._saveFile(self.saveFileDialog())
 
     def saveFileDialog(self):
-        pass
-        # caption = self.tr("%s - Choose File") % __appname__
-        # filters = self.tr("Label files (*%s)") % LabelFile.suffix
-        # if self.output_dir:
-        #     dlg = QtWidgets.QFileDialog(
-        #         self, caption, self.output_dir, filters
-        #     )
-        # else:
-        #     dlg = QtWidgets.QFileDialog(
-        #         self, caption, self.currentPath(), filters
-        #     )
-        # dlg.setDefaultSuffix(LabelFile.suffix[1:])
-        # dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
-        # dlg.setOption(QtWidgets.QFileDialog.DontConfirmOverwrite, False)
-        # dlg.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, False)
-        # basename = osp.basename(osp.splitext(self.filename)[0])
-        # if self.output_dir:
-        #     default_labelfile_name = osp.join(
-        #         self.output_dir, basename + LabelFile.suffix
-        #     )
-        # else:
-        #     default_labelfile_name = osp.join(
-        #         self.currentPath(), basename + LabelFile.suffix
-        #     )
-        # filename = dlg.getSaveFileName(
-        #     self,
-        #     self.tr("Choose File"),
-        #     default_labelfile_name,
-        #     self.tr("Label files (*%s)") % LabelFile.suffix,
-        # )
-        # if isinstance(filename, tuple):
-        #     filename, _ = filename
-        # return filename
+        caption = self.tr("%s - Choose File") % __appname__
+        filters = self.tr("Label files (*%s)") % LabelFile.suffix
+        if self.output_dir:
+            dlg = QtWidgets.QFileDialog(
+                self, caption, self.output_dir, filters
+            )
+        else:
+            dlg = QtWidgets.QFileDialog(
+                self, caption, self.currentPath(), filters
+            )
+        dlg.setDefaultSuffix(LabelFile.suffix[1:])
+        dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
+        dlg.setOption(QtWidgets.QFileDialog.DontConfirmOverwrite, False)
+        dlg.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, False)
+        basename = osp.basename(osp.splitext(self.filename)[0])
+        if self.output_dir:
+            default_labelfile_name = osp.join(
+                self.output_dir, basename + LabelFile.suffix
+            )
+        else:
+            default_labelfile_name = osp.join(
+                self.currentPath(), basename + LabelFile.suffix
+            )
+        filename = dlg.getSaveFileName(
+            self,
+            self.tr("Choose File"),
+            default_labelfile_name,
+            self.tr("Label files (*%s)") % LabelFile.suffix,
+        )
+        if isinstance(filename, tuple):
+            filename, _ = filename
+        return filename
 
     def _saveFile(self, filename):
-        pass
-        # if filename and self.saveLabels(filename):
-        #     self.addRecentFile(filename)
-        #     self.setClean()
+        if filename and self.saveLabels(filename):
+            self.addRecentFile(filename)
+            self.setClean()
 
     def closeFile(self, _value=False):
         if not self.mayContinue():
@@ -1967,7 +1964,7 @@ class MainWindow(QtWidgets.QMainWindow):
             os.remove(label_file)
             logger.info("Label file is removed: {}".format(label_file))
 
-            item = self.fileListWidgetList.currentItem()
+            item = self.fileListWidgetList[self.tabs.currentIndex()].currentItem()
             item.setCheckState(Qt.Unchecked)
 
             self.resetState()
@@ -2066,29 +2063,29 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setDirty()
 
     def openDirDialog(self, _value=False, dirpath=None):
-        pass
-        # if not self.mayContinue():
-        #     return
-        #
-        # defaultOpenDirPath = dirpath if dirpath else "."
-        # if self.lastOpenDir and osp.exists(self.lastOpenDir):
-        #     defaultOpenDirPath = self.lastOpenDir
-        # else:
-        #     defaultOpenDirPath = (
-        #         osp.dirname(self.filename) if self.filename else "."
-        #     )
-        #
-        # targetDirPath = str(
-        #     QtWidgets.QFileDialog.getExistingDirectory(
-        #         self,
-        #         self.tr("%s - Open Directory") % __appname__,
-        #         defaultOpenDirPath,
-        #         QtWidgets.QFileDialog.ShowDirsOnly
-        #         | QtWidgets.QFileDialog.DontResolveSymlinks,
-        #     )
-        # )
-        # self.importDirImages(targetDirPath)
-        # self.okBtnList.setEnabled(False)  # by hw1230
+        if not self.mayContinue():
+            return
+
+        defaultOpenDirPath = dirpath if dirpath else "."
+        if self.lastOpenDir and osp.exists(self.lastOpenDir):
+            defaultOpenDirPath = self.lastOpenDir
+        else:
+            defaultOpenDirPath = (
+                osp.dirname(self.filename) if self.filename else "."
+            )
+
+        targetDirPath = str(
+            QtWidgets.QFileDialog.getExistingDirectory(
+                self,
+                self.tr("%s - Open Directory") % __appname__,
+                defaultOpenDirPath,
+                QtWidgets.QFileDialog.ShowDirsOnly
+                | QtWidgets.QFileDialog.DontResolveSymlinks,
+            )
+        )
+        self.importDirImages(targetDirPath)
+        self.okBtnList[self.tabs.currentIndex()].setEnabled(False)  # by hw1230
+        self.rejectBtnList[self.tabs.currentIndex()].setEnabled(False)
 
     @property
     def imageList(self):
@@ -2100,37 +2097,36 @@ class MainWindow(QtWidgets.QMainWindow):
         return lst
 
     def importDroppedImageFiles(self, imageFiles):
-        pass
-        # extensions = [
-        #     ".%s" % fmt.data().decode().lower()
-        #     for fmt in QtGui.QImageReader.supportedImageFormats()
-        # ]
-        #
-        # self.filename = None
-        # for file in imageFiles:
-        #     if file in self.imageList or not file.lower().endswith(
-        #             tuple(extensions)
-        #     ):
-        #         continue
-        #     label_file = osp.splitext(file)[0] + ".json"
-        #     if self.output_dir:
-        #         label_file_without_path = osp.basename(label_file)
-        #         label_file = osp.join(self.output_dir, label_file_without_path)
-        #     item = QtWidgets.QListWidgetItem(file)
-        #     item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-        #     if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
-        #             label_file
-        #     ):
-        #         item.setCheckState(Qt.Checked)
-        #     else:
-        #         item.setCheckState(Qt.Unchecked)
-        #     self.fileListWidgetList.addItem(item)
-        #
-        # if len(self.imageList) > 1:
-        #     self.actions.openNextImg.setEnabled(True)
-        #     self.actions.openPrevImg.setEnabled(True)
-        #
-        # self.openNextImg()
+        extensions = [
+            ".%s" % fmt.data().decode().lower()
+            for fmt in QtGui.QImageReader.supportedImageFormats()
+        ]
+
+        self.filename = None
+        for file in imageFiles:
+            if file in self.imageList or not file.lower().endswith(
+                    tuple(extensions)
+            ):
+                continue
+            label_file = osp.splitext(file)[0] + ".json"
+            if self.output_dir:
+                label_file_without_path = osp.basename(label_file)
+                label_file = osp.join(self.output_dir, label_file_without_path)
+            item = QtWidgets.QListWidgetItem(file)
+            item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+            if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
+                    label_file
+            ):
+                item.setCheckState(Qt.Checked)
+            else:
+                item.setCheckState(Qt.Unchecked)
+            self.fileListWidgetList[self.tabs.currentIndex()].addItem(item)
+
+        if len(self.imageList) > 1:
+            self.actions.openNextImg.setEnabled(True)
+            self.actions.openPrevImg.setEnabled(True)
+
+        self.openNextImg()
 
     def importDirImages(self, tabIndex, dirpath, pattern=None, load=True):
         if not self.mayContinue() or not dirpath:
@@ -2163,7 +2159,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # item.setCheckState(Qt.Unchecked)
 
             self.fileListWidgetList[tabIndex].addItem(item)
-        self.openNextImg(tabIndex, load=load)
+        self.openNextImg(load=load)
 
     def scanAllImages(self, folderPath):
         extensions = [
@@ -2200,7 +2196,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.okBtnList[i].setEnabled(False)
             self.rejectBtnList[i].setEnabled(False)
 
-            bucket_download_directory = down_directory_list[0]
+            bucket_download_directory = down_directory_list[i]
     
             try:
                 target_path = local_depository + local_directory_name[i] + r"\\"
@@ -2227,6 +2223,9 @@ class MainWindow(QtWidgets.QMainWindow):
             #         # self.doneListWidget.addItem(item)
 
     def process(self, is_ok):       # is_ok : 승인 / 반려
+        if not self.mayContinue():
+            return
+
         ti = self.tabs.currentIndex()
         # print(ti)
         si = self.fileListWidgetList[ti].currentRow()
