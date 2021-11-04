@@ -55,7 +55,7 @@ else:
 # added by hw1230
 # conf = get_config()
 conf = get_config(CONFFILE) # added by khlee
-local_depository = r"C:\\labelme\\"  # 저장 경로 수정 by dwnam 210913
+local_depository = conf["save_driver"].upper() + r":\\labelme\\"  # 저장 경로 드라이버를 수정 할 수 있도록 변경 by dwnam 211104
 # local_depository = os.path.expanduser('~') + os.path.sep + "Documents" + os.path.sep + "labelme" + os.path.sep
 down_bucket_name_list = []
 down_directory_list = []
