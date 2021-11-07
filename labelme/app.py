@@ -76,6 +76,8 @@ up_access_key = conf["up_access_key"]
 up_access_token = conf["up_access_token"]
 
 local_directory_name = ['init_data', 'rework_data']
+tab_title = ['초기 검수 데이터', '재검수 데이터']
+result_title = ['승인 목록', '반려 목록']
 
 # FIXME
 # - [medium] Set max zoom value to something big enough for FitWidth/Window
@@ -212,6 +214,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.fileListLayoutList = []
         self.okListWidgetList = []
         self.rejectListWidgetList = []
+        self.resultLabelList = []
         for i in range(0, 2):
             self.okBtnList.append(QtWidgets.QPushButton("승인", self))
             self.okBtnList[i].clicked.connect(self.ok)
@@ -238,9 +241,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.fileListLayoutList[i].setSpacing(0)
             self.fileListLayoutList[i].addWidget(self.fileListWidgetList[i])
             self.fileListLayoutList[i].addLayout(self.btnLayoutList[i])
-            self.fileListLayoutList[i].addWidget(QtWidgets.QLabel('승인 목록', self))
+            self.resultLabelList.append([])
+            self.resultLabelList[i].append(QtWidgets.QLabel(result_title[0] + " (0건)", self))
+            self.fileListLayoutList[i].addWidget(self.resultLabelList[i][0])
             self.fileListLayoutList[i].addWidget(self.okListWidgetList[i])
-            self.fileListLayoutList[i].addWidget(QtWidgets.QLabel('반려 목록', self))
+            self.resultLabelList[i].append(QtWidgets.QLabel(result_title[1] + " (0건)", self))
+            self.fileListLayoutList[i].addWidget(self.resultLabelList[i][1])
             self.fileListLayoutList[i].addWidget(self.rejectListWidgetList[i])
 
         # GUI added by hw1230
@@ -258,10 +264,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tabs = QtWidgets.QTabWidget()
         t1 = QtWidgets.QWidget()
         t1.setLayout(self.fileListLayoutList[0])
-        self.tabs.addTab(t1, '초기 검수 데이터')
+        self.tabs.addTab(t1, tab_title[0])
         t2 = QtWidgets.QWidget()
         t2.setLayout(self.fileListLayoutList[1])
-        self.tabs.addTab(t2, '재검수 데이터')
+        self.tabs.addTab(t2, tab_title[1])
         self.tabs.currentChanged.connect(self.tabChanged)
 
         outerLayout = QtWidgets.QVBoxLayout()
@@ -2146,6 +2152,9 @@ class MainWindow(QtWidgets.QMainWindow):
             if os.path.isfile(ss[0] + "_" + ss[1] + ".bak"):
                 continue
 
+            if filename.find(self.login_id) == -1 :
+                continue
+
             label_file = osp.splitext(filename)[0] + ".json"
             if self.output_dir:
                 label_file_without_path = osp.basename(label_file)
@@ -2175,6 +2184,10 @@ class MainWindow(QtWidgets.QMainWindow):
         images.sort(key=lambda x: x.lower())
         return images
 
+    def changeTabTitle(self):
+        for i in range(0, 2):
+            self.tabs.setTabText(i, tab_title[i] + " ({:,}건)".format(self.fileListWidgetList[i].count()))
+
     def tabChanged(self):
         ti = self.tabs.currentIndex()
         # print("ci=" + str(self.fileListWidgetList[ti].currentRow()))
@@ -2187,7 +2200,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # by hw1230
     def login(self):
-        self.login_id = self.id.text()
+        self.login_id = self.id.text().strip()
+
+        if self.login_id == "":
+            QMessageBox.warning(self, "", "전화번호를 입력하세요.", QMessageBox.Ok)
+            return
 
         for i in range(0, 2):
             self.fileListWidgetList[i].clear()
@@ -2221,6 +2238,7 @@ class MainWindow(QtWidgets.QMainWindow):
             #         ff = f.rsplit('.', 1)[0].rsplit('_', 1)
             #         item = QtWidgets.QListWidgetItem(ff[0] + "." + ff[1])
             #         # self.doneListWidget.addItem(item)
+        self.changeTabTitle()
 
     def process(self, is_ok):       # is_ok : 승인 / 반려
         if not self.mayContinue():
@@ -2236,15 +2254,27 @@ class MainWindow(QtWidgets.QMainWindow):
         upFile = os.path.splitext(fullPath)[0] + ".json"
         # print(upFile)
 
+        log_bucket_name = down_bucket_name_list[ti]
+        remain_num = self.fileListWidgetList[ti].count() - 1
+        ok_num = self.okListWidgetList[ti].count()
+        reject_num = self.rejectListWidgetList[ti].count()
+
         this_bucket_name = up_bucket_name  # 승인
+        action_type = "승인 "
         if not is_ok:
             this_bucket_name = upnok_bucket_name  # 반려
+            action_type = "반려 "
+            reject_num = reject_num + 1
+        else:
+            ok_num = ok_num + 1
 
         if ti == 0:   # process03
             try:
                 if os.path.isfile(upFile):
                     # json 업로드
                     osh.upload_object_simply(this_bucket_name, upFile, upFile.split(local_directory_name[ti] + r"\\")[1].replace(os.path.sep, "/"))
+                    osh.log_by_bucket_name(local_depository + local_directory_name[ti] + r"\\",
+                                           action_type + fileName + "\n" + self.login_id + " 잔여: %d건, 승인: %d건, 반려: %d건" % (remain_num, ok_num, reject_num), log_bucket_name)
 
                     # 로컬 .json 을 _json.bak 으로 변경
                     newName = osh.get_bak_file_name(upFile)
@@ -2261,6 +2291,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 if os.path.isfile(upFile):
                     # json 업로드
                     osh.upload_object_simply(this_bucket_name, upFile, upFile.split(local_directory_name[ti] + r"\\")[1].replace(os.path.sep, "/"))
+                    osh.log_by_bucket_name(local_depository + local_directory_name[ti] + r"\\",
+                                           action_type + fileName + "\n" + self.login_id + " 잔여: %d건, 승인: %d건, 반려: %d건" % (remain_num, ok_num, reject_num), log_bucket_name)
 
                     # -rework json 삭제
                     osh.delete_object(down_bucket_name_list[1], upFile.split(local_directory_name[ti] + r"\\")[1].replace(os.path.sep, "/"))
@@ -2287,9 +2319,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def ok(self):
         self.process(True)
+        ti = self.tabs.currentIndex()
+        self.resultLabelList[ti][0].setText(result_title[0] + " ({:,}건)".format(self.okListWidgetList[ti].count()))
+        self.changeTabTitle()
 
     def reject(self):
         self.process(False)
+        ti = self.tabs.currentIndex()
+        self.resultLabelList[ti][1].setText(result_title[1] + " ({:,}건)".format(self.rejectListWidgetList[ti].count()))
+        self.changeTabTitle()
 
     # by hw1230
     def autoAnnotation(self):
