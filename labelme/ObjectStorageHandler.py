@@ -166,7 +166,7 @@ def log(log_path, msg, s3bucket):
     s3bucket.upload_file(log_full_name, "logs/" + log_file_name)
 
 # 오브젝트 다운로드
-def download_object(object_name, save_path, s3bucket, loggint=True):
+def download_object(object_name, save_path, s3bucket, logging=True):
     file_path, file_name = os.path.split(object_name)
 
     s3bucket.download_file(object_name, save_path + object_name)
