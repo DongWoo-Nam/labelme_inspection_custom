@@ -1,3 +1,4 @@
+import io
 import os
 from typing import List, Any
 
@@ -295,6 +296,13 @@ def delete_object(bucket_name, object_name):
             }
         ]
     })
+
+def read_file(bucket_name, file_name):
+    s3bucket = s3.Bucket(bucket_name)
+    file = io.BytesIO()
+    obj = s3bucket.Object(file_name)
+    obj.download_fileobj(file)
+    return file
 
 
 if __name__ == '__main__':
