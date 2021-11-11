@@ -188,4 +188,41 @@ def main():
 
 # this main block is required to generate executable by pyinstaller
 if __name__ == "__main__":
-    main()
+    from PyQt5.QtWidgets import QMessageBox
+    from labelme import ObjectStorageHandler as osh
+    import boto3
+
+
+    class Ui_MainWindow(QtWidgets.QWidget):
+        def __init__(self):
+            super().__init__()
+
+        def Critical_event(self, old_version, new_version):
+            QMessageBox.critical(self, '경고 메세지', f'최신 버전을 이용해 주세요(현재 버전-{old_version}, 최신버전-{new_version})')
+
+
+    service_name = 's3'
+    endpoint_url = 'https://kr.object.ncloudstorage.com'
+    region_name = 'kr-standard'
+    access_key = 'DgEJlJmCpUpELcRyAj9F'
+    access_token = 'axcixs48W3YsXxCNmCaYSspUEOHzkXJW0u0b7gmi'
+    s3 = boto3.Session(region_name='kr-standard',
+                       aws_access_key_id=access_key,
+                       aws_secret_access_key=access_token).resource('s3',
+                                                                    endpoint_url='https://kr.object.ncloudstorage.com')
+    bucket_name = "version-check"
+    worket_version = osh.get_object_list_directory(bucket=bucket_name, s3_prefix="labelme_inspecter_v1")["items"]
+
+    file = osh.read_file(bucket_name=bucket_name, file_name=worket_version[0])
+    file.seek(0)
+    version_ = file.read().decode().split("\r")[0]
+    CONFFILE = None
+    conf = get_config(CONFFILE)
+    if str(conf["version"]) == version_:
+        main()
+    else:
+        import sys
+
+        app = QtWidgets.QApplication(sys.argv)
+        ui = Ui_MainWindow()
+        ui.Critical_event(old_version=str(conf["version"]), new_version=version_)
