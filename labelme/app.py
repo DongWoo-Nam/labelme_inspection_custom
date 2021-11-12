@@ -2033,7 +2033,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._config["keep_prev"] = not self._config["keep_prev"]
 
     def removeSelectedPoint(self):
-        self.canvas.removeSelectedPoint()
+        if not self.canvas.removeSelectedPoint():
+            return
         if not self.canvas.hShape.points:
             self.canvas.deleteShape(self.canvas.hShape)
             self.remLabels([self.canvas.hShape])
