@@ -92,7 +92,7 @@ class LabelDialog(QtWidgets.QDialog):
                 QtWidgets.QAbstractItemView.InternalMove
             )
         self.labelList.currentItemChanged.connect(self.labelSelected)
-        self.labelList.itemDoubleClicked.connect(self.labelDoubleClicked)
+        # self.labelList.itemDoubleClicked.connect(self.labelDoubleClicked)
         self.edit.setListWidget(self.labelList)
         layout.addWidget(self.labelList)
         # label_flags
@@ -143,8 +143,8 @@ class LabelDialog(QtWidgets.QDialog):
         if text:
             self.accept()
 
-    def labelDoubleClicked(self, item):
-        self.validate()
+    # def labelDoubleClicked(self, item):
+    #     self.validate()
 
     def postProcess(self):
         text = self.edit.text()

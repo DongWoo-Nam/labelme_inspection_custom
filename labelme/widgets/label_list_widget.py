@@ -121,7 +121,7 @@ class LabelListWidget(QtWidgets.QListView):
         self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
         self.setDefaultDropAction(Qt.MoveAction)
 
-        self.doubleClicked.connect(self.itemDoubleClickedEvent)
+        # self.doubleClicked.connect(self.itemDoubleClickedEvent)
         self.selectionModel().selectionChanged.connect(
             self.itemSelectionChangedEvent
         )
@@ -151,8 +151,8 @@ class LabelListWidget(QtWidgets.QListView):
         ]
         self.itemSelectionChanged.emit(selected, deselected)
 
-    def itemDoubleClickedEvent(self, index):
-        self.itemDoubleClicked.emit(self.model().itemFromIndex(index))
+    # def itemDoubleClickedEvent(self, index):
+    #     self.itemDoubleClicked.emit(self.model().itemFromIndex(index))
 
     def selectedItems(self):
         return [self.model().itemFromIndex(i) for i in self.selectedIndexes()]
