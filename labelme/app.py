@@ -1370,7 +1370,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 filename=filename,
                 shapes=shapes,
                 imagePath=imagePath,
-                imageData= imageData,
+                # imageData= imageData,
+                imageData=None,  # None 이미지 해시 값 기본으로 안넣기 위해 None으로 수정
                 imageHeight=self.image.height(),
                 imageWidth=self.image.width(),
                 otherData=self.otherData,
