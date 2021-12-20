@@ -295,8 +295,9 @@ def download_directory_image(bucket_name, img_bucket_name, directory_name, save_
                 json_data = json.load(f)
             img_file = os.path.dirname(file) + "/" + json_data['imagePath']
             if not os.path.isfile(img_file):  # 작업 완료 파일 재 다운로드 방지 by dwnam
-                download_object(img_file, save_path, s3bucket2, False)
-                img_num = img_num + 1
+                if check(s3bucket2, img_file):  # json이랑 매칭되는 이미지가 있을 경우 다운로드
+                    download_object(img_file, save_path, s3bucket2, False)
+                    img_num = img_num + 1
         progress.setValue(i)
 
     log(save_path, login_id + " downloaded %d json files, %d image files" % (json_num, img_num), s3bucket)
@@ -371,6 +372,14 @@ def read_file(bucket_name, file_name):
     obj = s3bucket.Object(file_name)
     obj.download_fileobj(file)
     return file
+
+from botocore.exceptions import ClientError
+def check(bucket, key, s3=s3):
+    try:
+        s3.Object(bucket, key).load()
+    except ClientError as e:
+        return int(e.response['Error']['Code']) != 404
+    return True
 
 
 if __name__ == '__main__':
