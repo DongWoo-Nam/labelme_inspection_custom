@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import functools
+import json
 import math
 import os
 import os.path as osp
@@ -2273,16 +2274,27 @@ class MainWindow(QtWidgets.QMainWindow):
         if ti == 0:   # process03
             try:
                 if os.path.isfile(upFile):
+                    # json 파일에서 imageData 확인 후 null값으로 들어가 있는지 확인
+                    with open(upFile, "r", encoding="utf-8") as f:
+                        labelme_json_file = json.load(f)
+                    labelme_form = labelme_json_file.copy()
+                    if labelme_form['imageData'] != None:
+                        labelme_form['imageData'] = None
+                        with open(upFile, 'w', encoding='utf-8') as f:
+                            json.dump(labelme_form, f, indent='\t')
                     # json 업로드
                     osh.upload_object_simply(this_bucket_name, upFile, upFile.split(local_directory_name[ti] + r"\\")[1].replace(os.path.sep, "/"))
                     osh.log_by_bucket_name(local_depository + local_directory_name[ti] + r"\\",
                                            action_type + fileName + "\n" + self.login_id + " 잔여: %d건, 승인: %d건, 반려: %d건" % (remain_num, ok_num, reject_num), log_bucket_name)
 
                     # 로컬 .json 을 _json.bak 으로 변경
-                    newName = osh.get_bak_file_name(upFile)
-                    if os.path.isfile(newName):
-                        os.remove(newName)
-                    os.rename(upFile, newName)
+                    # newName = osh.get_bak_file_name(upFile)
+                    # if os.path.isfile(newName):
+                    #     os.remove(newName)
+                    # os.rename(upFile, newName)
+
+                    # 위의 스크립트 주석 처리하고 json도 삭제하는 것으로 변경 211220 by dwnam
+                    os.remove(upFile)
 
                     # 로컬 이미지 삭제
                     os.remove(fullPath)
