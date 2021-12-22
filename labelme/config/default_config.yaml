@@ -36,19 +36,19 @@ label_colors: null
 #up_directory: RDA/calibration/
 #up_access_key: 31020734F48340A08694
 #up_access_token: 23EB7EACCD76371BBA88487F9BEB5CDEB00BC08E
-version: 211109.1
+version: 211222.1
 
 save_driver: C
 img_bucket_name: test-process02   # for image file
-img_directory:  shrimp/type02/
+img_directory:  shrimp/
 down1_bucket_name: test-process03
-down1_directory:  shrimp/type02/
+down1_directory:  shrimp/
 down2_bucket_name: test-process03-rework
-down2_directory:  shrimp/type02/
+down2_directory:  shrimp/
 up_bucket_name: test-process04
-up_directory: shrimp/type02/
+up_directory: shrimp/
 upnok_bucket_name: test-process03-nok
-upnok_directory: shrimp/type02/
+upnok_directory: shrimp/
 
 down_access_key: DgEJlJmCpUpELcRyAj9F
 down_access_token: axcixs48W3YsXxCNmCaYSspUEOHzkXJW0u0b7gmi

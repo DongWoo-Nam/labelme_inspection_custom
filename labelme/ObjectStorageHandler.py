@@ -231,7 +231,42 @@ def download_directory_image(bucket_name, img_bucket_name, directory_name, save_
     # print('bucket: %s' % bucket_name)
     # print('directory: %s' % directory_name)
 
-    items = get_object_list_directory(bucket_name, directory_name, login_id)['items']
+    # config 상 down1_bucket_name의 데이터
+    down_bucket_data = read_file(bucket_name, f"{bucket_name}_object_list.json")  # 배치로 생성된 object list 읽기
+    down_bucket_data.seek(0)
+    dict_down = down_bucket_data.read().decode()
+    data_down = json.loads(dict_down)
+    down_bucket_items_origin = [x for x in data_down[directory_name.split("/")[0]] if login_id in x]  # directory_name.split("/")[0]는 'shrimp' or 'tomato' or 'paprika'
+    down_bucket_items_origin = [x for x in down_bucket_items_origin if directory_name in x]
+    down_bucket_items_origin = [x for x in down_bucket_items_origin if x.endswith(tuple((".json")))]  # proc02이기때문에 이미지의 확장자만 가지고 오기
+    down_bucket_items_origin = [x.split(".")[0] for x in down_bucket_items_origin]  # .json과 비교하기 위하여 뒤의 확장자 제외하고 이름 비교
+
+    # config 상 up_bucket_name의 데이터
+    up_bucket_data = read_file(app.up_bucket_name, f"{app.up_bucket_name}_object_list.json")  # 배치로 생성된 object list 읽기
+    up_bucket_data.seek(0)
+    dict_up = up_bucket_data.read().decode()
+    data_up = json.loads(dict_up)
+    up_bucket_items_origin = [x for x in data_up[directory_name.split("/")[0]] if login_id in x]  # directory_name.split("/")[0]는 'shrimp' or 'tomato' or 'paprika'
+    up_bucket_items_origin = [x for x in up_bucket_items_origin if directory_name in x]
+    up_bucket_items_origin = [x for x in up_bucket_items_origin if x.endswith(tuple((".json")))]  # proc02이기때문에 이미지의 확장자만 가지고 오기
+    up_bucket_items_origin = [x.split(".")[0] for x in up_bucket_items_origin]  # .json과 비교하기 위하여 뒤의 확장자 제외하고 이름 비교
+
+    # config 상 upnok_bucket_name의 데이터
+    up_nok_bucket_data = read_file(app.upnok_bucket_name, f"{app.upnok_bucket_name}_object_list.json")  # 배치로 생성된 object list 읽기
+    up_nok_bucket_data.seek(0)
+    dict_upnok = up_nok_bucket_data.read().decode()
+    data_upnok = json.loads(dict_upnok)
+    up_nok_bucket_items_origin = [x for x in data_upnok[directory_name.split("/")[0]] if login_id in x]  # directory_name.split("/")[0]는 'shrimp' or 'tomato' or 'paprika'
+    up_nok_bucket_items_origin = [x for x in up_nok_bucket_items_origin if directory_name in x]
+    up_nok_bucket_items_origin = [x for x in up_nok_bucket_items_origin if x.endswith(tuple((".json")))]  # proc02이기때문에 이미지의 확장자만 가지고 오기
+    up_nok_bucket_items_origin = [x.split(".")[0] for x in up_nok_bucket_items_origin]  # .json과 비교하기 위하여 뒤의 확장자 제외하고 이름 비교
+
+    # 조건에 부합하는 이미지만 list에 넣기 위한 작업
+    # 예를들어 1차 검수자이면 process03의 작업 완료 목록에서 process04의 1차 검수 완료 목록을 빼고 process03-nok의 목록을 뺀 데이터가 1차 검수를 할 목록이 되는 것임
+    not_working = list((set(down_bucket_items_origin) - set(up_bucket_items_origin)) - set(up_nok_bucket_items_origin))
+    not_working.sort()
+    items = [x + ".json" for x in not_working]
+    # items = get_object_list_directory(bucket_name, directory_name, login_id)['items']  # 기존 스크립트 주석처리 211220 by dwnam
 
     progress = QtWidgets.QProgressDialog("Download files...", '', 0, len(items))
     progress.setCancelButton(None)
@@ -260,8 +295,11 @@ def download_directory_image(bucket_name, img_bucket_name, directory_name, save_
                 json_data = json.load(f)
             img_file = os.path.dirname(file) + "/" + json_data['imagePath']
             if not os.path.isfile(img_file):  # 작업 완료 파일 재 다운로드 방지 by dwnam
-                download_object(img_file, save_path, s3bucket2, False)
-                img_num = img_num + 1
+                if check(img_bucket_name, img_file):  # json이랑 매칭되는 이미지가 있을 경우 다운로드
+                    download_object(img_file, save_path, s3bucket2, False)
+                    img_num = img_num + 1
+                else:
+                    log(save_path, login_id + f'파일 짝이 맞지 않습니다. : {img_file} / {file}',s3bucket)  # 짝이 맞지 않았을때 로그 생성 211222
         progress.setValue(i)
 
     log(save_path, login_id + " downloaded %d json files, %d image files" % (json_num, img_num), s3bucket)
@@ -337,7 +375,17 @@ def read_file(bucket_name, file_name):
     obj.download_fileobj(file)
     return file
 
+from botocore.exceptions import ClientError
+def check(bucket, key):
+    global s3
+    try:
+        s3.Object(bucket, key).load()
+    except ClientError as e:
+        return int(e.response['Error']['Code']) != 404
+    return True
+
 
 if __name__ == '__main__':
-    download_directory('ai-object-storage', 'labelme/download/01062537326', "C:/Users/admin/Documents/labelme")
+    pass
+    # download_directory('ai-object-storage', 'labelme/download/01062537326', "C:/Users/admin/Documents/labelme")
 
