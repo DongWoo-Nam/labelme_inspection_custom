@@ -256,11 +256,13 @@ def download_directory_image(bucket_name, img_bucket_name, directory_name, save_
     up_nok_bucket_data.seek(0)
     dict_upnok = up_nok_bucket_data.read().decode()
     data_upnok = json.loads(dict_upnok)
-    up_nok_bucket_items_origin = [x for x in data_upnok[directory_name.split("/")[0]] if login_id in x]  # directory_name.split("/")[0]는 'shrimp' or 'tomato' or 'paprika'
-    up_nok_bucket_items_origin = [x for x in up_nok_bucket_items_origin if directory_name in x]
-    up_nok_bucket_items_origin = [x for x in up_nok_bucket_items_origin if x.endswith(tuple((".json")))]  # proc02이기때문에 이미지의 확장자만 가지고 오기
-    up_nok_bucket_items_origin = [x.split(".")[0] for x in up_nok_bucket_items_origin]  # .json과 비교하기 위하여 뒤의 확장자 제외하고 이름 비교
-
+    try:
+        up_nok_bucket_items_origin = [x for x in data_upnok[directory_name.split("/")[0]] if login_id in x]  # directory_name.split("/")[0]는 'shrimp' or 'tomato' or 'paprika'
+        up_nok_bucket_items_origin = [x for x in up_nok_bucket_items_origin if directory_name in x]
+        up_nok_bucket_items_origin = [x for x in up_nok_bucket_items_origin if x.endswith(tuple((".json")))]  # proc02이기때문에 이미지의 확장자만 가지고 오기
+        up_nok_bucket_items_origin = [x.split(".")[0] for x in up_nok_bucket_items_origin]  # .json과 비교하기 위하여 뒤의 확장자 제외하고 이름 비교
+    except Exception as e:
+        up_nok_bucket_items_origin = []
     # 조건에 부합하는 이미지만 list에 넣기 위한 작업
     # 예를들어 1차 검수자이면 process03의 작업 완료 목록에서 process04의 1차 검수 완료 목록을 빼고 process03-nok의 목록을 뺀 데이터가 1차 검수를 할 목록이 되는 것임
     not_working = list((set(down_bucket_items_origin) - set(up_bucket_items_origin)) - set(up_nok_bucket_items_origin))
