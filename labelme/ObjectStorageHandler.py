@@ -246,10 +246,13 @@ def download_directory_image(bucket_name, img_bucket_name, directory_name, save_
     up_bucket_data.seek(0)
     dict_up = up_bucket_data.read().decode()
     data_up = json.loads(dict_up)
-    up_bucket_items_origin = [x for x in data_up[directory_name.split("/")[0]] if login_id in x]  # directory_name.split("/")[0]는 'shrimp' or 'tomato' or 'paprika'
-    up_bucket_items_origin = [x for x in up_bucket_items_origin if directory_name in x]
-    up_bucket_items_origin = [x for x in up_bucket_items_origin if x.endswith(tuple((".json")))]  # proc02이기때문에 이미지의 확장자만 가지고 오기
-    up_bucket_items_origin = [x.split(".")[0] for x in up_bucket_items_origin]  # .json과 비교하기 위하여 뒤의 확장자 제외하고 이름 비교
+    try:
+        up_bucket_items_origin = [x for x in data_up[directory_name.split("/")[0]] if login_id in x]  # directory_name.split("/")[0]는 'shrimp' or 'tomato' or 'paprika'
+        up_bucket_items_origin = [x for x in up_bucket_items_origin if directory_name in x]
+        up_bucket_items_origin = [x for x in up_bucket_items_origin if x.endswith(tuple((".json")))]  # proc02이기때문에 이미지의 확장자만 가지고 오기
+        up_bucket_items_origin = [x.split(".")[0] for x in up_bucket_items_origin]  # .json과 비교하기 위하여 뒤의 확장자 제외하고 이름 비교
+    except Exception as e:
+        up_bucket_items_origin = []
 
     # config 상 upnok_bucket_name의 데이터
     up_nok_bucket_data = read_file(app.upnok_bucket_name, f"{app.upnok_bucket_name}_object_list.json")  # 배치로 생성된 object list 읽기
