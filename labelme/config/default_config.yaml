@@ -39,30 +39,22 @@ label_colors: null
 version: 211222.1
 
 save_driver: C
-img_bucket_name: test-process02   # for image file
-img_directory:  shrimp/
-down1_bucket_name: test-process03
-down1_directory:  shrimp/
-down2_bucket_name: test-process03-rework
-down2_directory:  shrimp/
-up_bucket_name: test-process04
-up_directory: shrimp/
-upnok_bucket_name: test-process03-nok
-upnok_directory: shrimp/
+img_bucket_name: phenotyping   # for image file
+img_directory: KAERI/
+down1_bucket_name: phenotyping-anno
+down1_directory: KAERI/
+down2_bucket_name: process03-rework
+down2_directory: KAERI/
+up_bucket_name: process04
+up_directory: KAERI/
+upnok_bucket_name: process03-nok
+upnok_directory: KAERI/
 
 down_access_key: DgEJlJmCpUpELcRyAj9F
 down_access_token: axcixs48W3YsXxCNmCaYSspUEOHzkXJW0u0b7gmi
 up_access_key: DgEJlJmCpUpELcRyAj9F
 up_access_token: axcixs48W3YsXxCNmCaYSspUEOHzkXJW0u0b7gmi
 
-#down_bucket_name: process02
-#down_directory:  shrimp/type02/
-#down_access_key: DDE3AB0B1B56C09101A8
-#down_access_token: 1425572A5F7D85C9F37A679B7738F1FBB9F6FD62
-#up_bucket_name: process03
-#up_directory: shrimp/type02/
-#up_access_key: DDE3AB0B1B56C09101A8
-#up_access_token: 1425572A5F7D85C9F37A679B7738F1FBB9F6FD62
 
 shape:
   # drawing

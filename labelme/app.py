@@ -2154,9 +2154,13 @@ class MainWindow(QtWidgets.QMainWindow):
             ss = filename.split('.')
             if os.path.isfile(ss[0] + "_" + ss[1] + ".bak"):
                 continue
-
-            if filename.find(self.login_id) == -1 :
-                continue
+            if "/" in self.login_id:  # 입력값에 "/"가 들어가 있으면 찾기가 안됨 따라서 "/"를 "\\"로 변경한 뒤 찾도록 해야함
+                login_id = self.login_id.replace("/", "\\")
+                if filename.find(login_id) == -1:
+                    continue
+            else:
+                if filename.find(self.login_id) == -1 :
+                    continue
 
             label_file = osp.splitext(filename)[0] + ".json"
             if self.output_dir:
@@ -2204,7 +2208,6 @@ class MainWindow(QtWidgets.QMainWindow):
     # by hw1230
     def login(self):
         self.login_id = self.id.text().strip()
-
         if self.login_id == "":
             QMessageBox.warning(self, "", "전화번호를 입력하세요.", QMessageBox.Ok)
             return
