@@ -272,7 +272,7 @@ def download_directory_image(bucket_name, img_bucket_name, directory_name, save_
     # 조건에 부합하는 이미지만 list에 넣기 위한 작업
     # 예를들어 1차 검수자이면 process03의 작업 완료 목록에서 process04의 1차 검수 완료 목록을 빼고 process03-nok의 목록을 뺀 데이터가 1차 검수를 할 목록이 되는 것임
 
-    not_working = list((set(down_bucket_items_origin) - set(up_bucket_items_origin)) - set(up_nok_bucket_items_origin))
+    not_working = list(set(down_bucket_items_origin) - set(up_nok_bucket_items_origin))  # 검수툴을 이용하는 작업자를 위한 수정
     not_working.sort()
     items = [x + ".json" for x in not_working]
     # items = get_object_list_directory(bucket_name, directory_name, login_id)['items']  # 기존 스크립트 주석처리 211220 by dwnam
