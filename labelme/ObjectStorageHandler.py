@@ -236,10 +236,13 @@ def download_directory_image(bucket_name, img_bucket_name, directory_name, save_
     down_bucket_data.seek(0)
     dict_down = down_bucket_data.read().decode()
     data_down = json.loads(dict_down)
-    down_bucket_items_origin = [x for x in data_down[directory_name.split("/")[0]] if login_id in x]  # directory_name.split("/")[0]는 'shrimp' or 'tomato' or 'paprika'
-    down_bucket_items_origin = [x for x in down_bucket_items_origin if directory_name in x]
-    down_bucket_items_origin = [x for x in down_bucket_items_origin if x.endswith(tuple((".json")))]  # proc02이기때문에 이미지의 확장자만 가지고 오기
-    down_bucket_items_origin = [x.split(".")[0] for x in down_bucket_items_origin]  # .json과 비교하기 위하여 뒤의 확장자 제외하고 이름 비교
+    try:
+        down_bucket_items_origin = [x for x in data_down[directory_name.split("/")[0]] if login_id in x]  # directory_name.split("/")[0]는 'shrimp' or 'tomato' or 'paprika'
+        down_bucket_items_origin = [x for x in down_bucket_items_origin if directory_name in x]
+        down_bucket_items_origin = [x for x in down_bucket_items_origin if x.endswith(tuple((".json")))]  # proc02이기때문에 이미지의 확장자만 가지고 오기
+        down_bucket_items_origin = [x.split(".")[0] for x in down_bucket_items_origin]  # .json과 비교하기 위하여 뒤의 확장자 제외하고 이름 비교
+    except Exception as e:
+        down_bucket_items_origin = []
 
     # config 상 up_bucket_name의 데이터
     up_bucket_data = read_file(app.up_bucket_name, f"{app.up_bucket_name}_object_list.json")  # 배치로 생성된 object list 읽기
@@ -268,12 +271,13 @@ def download_directory_image(bucket_name, img_bucket_name, directory_name, save_
         up_nok_bucket_items_origin = []
     # 조건에 부합하는 이미지만 list에 넣기 위한 작업
     # 예를들어 1차 검수자이면 process03의 작업 완료 목록에서 process04의 1차 검수 완료 목록을 빼고 process03-nok의 목록을 뺀 데이터가 1차 검수를 할 목록이 되는 것임
+
     not_working = list((set(down_bucket_items_origin) - set(up_bucket_items_origin)) - set(up_nok_bucket_items_origin))
     not_working.sort()
     items = [x + ".json" for x in not_working]
     # items = get_object_list_directory(bucket_name, directory_name, login_id)['items']  # 기존 스크립트 주석처리 211220 by dwnam
 
-    progress = QtWidgets.QProgressDialog("Download files...", '', 0, len(items))
+    progress = QtWidgets.QProgressDialog("Download files...", '', 0, len(items)+1)
     progress.setCancelButton(None)
     progress.setAutoClose(True)
     progress.setWindowModality(Qt.WindowModal)
