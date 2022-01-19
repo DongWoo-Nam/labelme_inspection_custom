@@ -1350,10 +1350,27 @@ class MainWindow(QtWidgets.QMainWindow):
 
         def format_shape(s):
             data = s.other_data.copy()
+            new_points = []
+            for p in s.points:
+                x = p.x()
+                y = p.y()
+
+                if x < 0:
+                    x = 0
+                elif x > self.image.width() - 1:
+                    x = self.image.width() - 1
+                if y < 0:
+                    y = 0
+                elif y > self.image.height() - 1:
+                    y = self.image.height() - 1
+
+                new_points.append((x, y))
+
             data.update(
                 dict(
                     label=s.label.encode("utf-8") if PY2 else s.label,
-                    points=[(p.x(), p.y()) for p in s.points],
+                    # points=[(p.x(), p.y()) for p in s.points],
+                    points=new_points,
                     group_id=s.group_id,
                     shape_type=s.shape_type,
                     flags=s.flags,
