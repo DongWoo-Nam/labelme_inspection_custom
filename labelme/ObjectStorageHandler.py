@@ -1,3 +1,4 @@
+import io
 import os
 from typing import List, Any
 
@@ -7,6 +8,7 @@ from qtpy import QtWidgets
 from qtpy.QtCore import Qt
 
 import json
+import datetime
 
 import app
 
@@ -146,15 +148,31 @@ def get_bak_file_name(file_name):
     file_ext = os.path.splitext(file_name)
     return file_ext[0] + "_" + file_ext[1][1:] + ".bak"
 
+def log_by_bucket_name(log_path, msg, bucket_name):
+    s3bucket = s3.Bucket(bucket_name)
+    log(log_path, msg, s3bucket)
+
+def log(log_path, msg, s3bucket):
+    dt_now = datetime.datetime.now()
+    szDate = dt_now.strftime('%Y%m%d')
+    szTime = dt_now.strftime('%H:%M:%S') + " "
+    log_file_name = app.down_access_key + "_" + szDate + ".txt"
+    log_full_name = log_path + log_file_name
+
+    with open(log_full_name, "a") as f:
+        f.write(szTime + msg + "\n")
+
+    # print("src=" + log_full_name)
+    # print("tgt=" + "logs/" + log_file_name)
+    s3bucket.upload_file(log_full_name, "logs/" + log_file_name)
+
 # 오브젝트 다운로드
-def download_object(object_name, save_path, s3bucket):
+def download_object(object_name, save_path, s3bucket, logging=True):
     file_path, file_name = os.path.split(object_name)
-    if not os.path.exists(save_path + file_path):
-        os.makedirs(save_path + file_path)
-    if (os.path.isfile(save_path + object_name)) | (get_bak_file_name(file_name) in os.listdir(save_path + file_path)):  # 작업 완료 파일 재 다운로드 방지 by dwnam
-        return
 
     s3bucket.download_file(object_name, save_path + object_name)
+    if logging:
+        log(save_path, "download %s" % file_name, s3bucket)
     print("Downloading object : %s" % object_name)
 
 
@@ -187,23 +205,23 @@ def download_directory_by_client(bucket_name, directory_name, save_path, login_i
 
 
 # 디렉토리 다운로드
-def download_directory(bucket_name, directory_name, save_path, login_id):
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-    s3bucket = s3.Bucket(bucket_name)
-    print('bucket: %s' % bucket_name)
-    print('directory: %s' % directory_name)
-
-    items = get_object_list_directory(bucket_name, directory_name, login_id)['items']
-
-    progress = QtWidgets.QProgressDialog("Download files...", '', 0, len(items))
-    progress.setCancelButton(None)
-    progress.setAutoClose(True)
-    progress.setWindowModality(Qt.WindowModal)
-
-    for i, file in enumerate(items):
-        download_object(file, save_path, s3bucket)
-        progress.setValue(i)
+# def download_directory(bucket_name, directory_name, save_path, login_id):
+    # if not os.path.exists(save_path):
+    #     os.makedirs(save_path)
+    # s3bucket = s3.Bucket(bucket_name)
+    # print('bucket: %s' % bucket_name)
+    # print('directory: %s' % directory_name)
+    #
+    # items = get_object_list_directory(bucket_name, directory_name, login_id)['items']
+    #
+    # progress = QtWidgets.QProgressDialog("Download files...", '', 0, len(items))
+    # progress.setCancelButton(None)
+    # progress.setAutoClose(True)
+    # progress.setWindowModality(Qt.WindowModal)
+    #
+    # for i, file in enumerate(items):
+    #     download_object(file, save_path, s3bucket)
+    #     progress.setValue(i)
 
 def download_directory_image(bucket_name, img_bucket_name, directory_name, save_path, login_id):
     if not os.path.exists(save_path):
@@ -220,17 +238,33 @@ def download_directory_image(bucket_name, img_bucket_name, directory_name, save_
     progress.setAutoClose(True)
     progress.setWindowModality(Qt.WindowModal)
 
+    json_num = 0
+    img_num = 0
+
     for i, file in enumerate(items):
+        file_path, file_name = os.path.split(file)
+        if not os.path.exists(save_path + file_path):
+            os.makedirs(save_path + file_path)
+        if (os.path.isfile(save_path + file)) | (
+                get_bak_file_name(file_name) in os.listdir(save_path + file_path)):  # 작업 완료 파일 재 다운로드 방지 by dwnam
+            progress.setValue(i)
+            continue
+
         download_object(file, save_path, s3bucket)
+        json_num = json_num + 1
+
         if file.endswith("json"):
             local_json = os.path.join(save_path[:-2], file)
             # print("bak=" + get_bak_file_name(local_json))
-            if not os.path.exists(get_bak_file_name(local_json)):
-                with open(local_json, 'r') as f:
-                    json_data = json.load(f)
-                img_file = os.path.dirname(file) + "/" + json_data['imagePath']
-                download_object(img_file, save_path, s3bucket2)
+            with open(local_json, 'r') as f:
+                json_data = json.load(f)
+            img_file = os.path.dirname(file) + "/" + json_data['imagePath']
+            if not os.path.isfile(save_path + img_file):  # 작업 완료 파일 재 다운로드 방지 by dwnam
+                download_object(img_file, save_path, s3bucket2, False)
+                img_num = img_num + 1
         progress.setValue(i)
+
+    log(save_path, login_id + " downloaded %d json files, %d image files" % (json_num, img_num), s3bucket)
 
 def upload_object_simply(bucket_name, src_file_path, tgt_file_path):
     print("bucket_name={}".format(bucket_name))
@@ -295,6 +329,13 @@ def delete_object(bucket_name, object_name):
             }
         ]
     })
+
+def read_file(bucket_name, file_name):
+    s3bucket = s3.Bucket(bucket_name)
+    file = io.BytesIO()
+    obj = s3bucket.Object(file_name)
+    obj.download_fileobj(file)
+    return file
 
 
 if __name__ == '__main__':

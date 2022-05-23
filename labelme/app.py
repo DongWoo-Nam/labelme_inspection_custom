@@ -55,7 +55,7 @@ else:
 # added by hw1230
 # conf = get_config()
 conf = get_config(CONFFILE) # added by khlee
-local_depository = r"C:\\labelme\\"  # 저장 경로 수정 by dwnam 210913
+local_depository = conf["save_driver"].upper() + r":\\labelme\\"  # 저장 경로 드라이버를 수정 할 수 있도록 변경 by dwnam 211104
 # local_depository = os.path.expanduser('~') + os.path.sep + "Documents" + os.path.sep + "labelme" + os.path.sep
 down_bucket_name_list = []
 down_directory_list = []
@@ -76,6 +76,8 @@ up_access_key = conf["up_access_key"]
 up_access_token = conf["up_access_token"]
 
 local_directory_name = ['init_data', 'rework_data']
+tab_title = ['초기 검수 데이터', '재검수 데이터']
+result_title = ['승인 목록', '반려 목록']
 
 # FIXME
 # - [medium] Set max zoom value to something big enough for FitWidth/Window
@@ -212,6 +214,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.fileListLayoutList = []
         self.okListWidgetList = []
         self.rejectListWidgetList = []
+        self.resultLabelList = []
         for i in range(0, 2):
             self.okBtnList.append(QtWidgets.QPushButton("승인", self))
             self.okBtnList[i].clicked.connect(self.ok)
@@ -238,9 +241,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.fileListLayoutList[i].setSpacing(0)
             self.fileListLayoutList[i].addWidget(self.fileListWidgetList[i])
             self.fileListLayoutList[i].addLayout(self.btnLayoutList[i])
-            self.fileListLayoutList[i].addWidget(QtWidgets.QLabel('승인 목록', self))
+            self.resultLabelList.append([])
+            self.resultLabelList[i].append(QtWidgets.QLabel(result_title[0] + " (0건)", self))
+            self.fileListLayoutList[i].addWidget(self.resultLabelList[i][0])
             self.fileListLayoutList[i].addWidget(self.okListWidgetList[i])
-            self.fileListLayoutList[i].addWidget(QtWidgets.QLabel('반려 목록', self))
+            self.resultLabelList[i].append(QtWidgets.QLabel(result_title[1] + " (0건)", self))
+            self.fileListLayoutList[i].addWidget(self.resultLabelList[i][1])
             self.fileListLayoutList[i].addWidget(self.rejectListWidgetList[i])
 
         # GUI added by hw1230
@@ -258,10 +264,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tabs = QtWidgets.QTabWidget()
         t1 = QtWidgets.QWidget()
         t1.setLayout(self.fileListLayoutList[0])
-        self.tabs.addTab(t1, '초기 검수 데이터')
+        self.tabs.addTab(t1, tab_title[0])
         t2 = QtWidgets.QWidget()
         t2.setLayout(self.fileListLayoutList[1])
-        self.tabs.addTab(t2, '재검수 데이터')
+        self.tabs.addTab(t2, tab_title[1])
         self.tabs.currentChanged.connect(self.tabChanged)
 
         outerLayout = QtWidgets.QVBoxLayout()
@@ -446,38 +452,38 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Start drawing rectangles"),
             enabled=False,
         )
-        createCircleMode = action(
-            self.tr("Create Circle"),
-            lambda: self.toggleDrawMode(False, createMode="circle"),
-            shortcuts["create_circle"],
-            "objects",
-            self.tr("Start drawing circles"),
-            enabled=False,
-        )
-        createLineMode = action(
-            self.tr("Create Line"),
-            lambda: self.toggleDrawMode(False, createMode="line"),
-            shortcuts["create_line"],
-            "objects",
-            self.tr("Start drawing lines"),
-            enabled=False,
-        )
-        createPointMode = action(
-            self.tr("Create Point"),
-            lambda: self.toggleDrawMode(False, createMode="point"),
-            shortcuts["create_point"],
-            "objects",
-            self.tr("Start drawing points"),
-            enabled=False,
-        )
-        createLineStripMode = action(
-            self.tr("Create LineStrip"),
-            lambda: self.toggleDrawMode(False, createMode="linestrip"),
-            shortcuts["create_linestrip"],
-            "objects",
-            self.tr("Start drawing linestrip. Ctrl+LeftClick ends creation."),
-            enabled=False,
-        )
+        # createCircleMode = action(
+        #     self.tr("Create Circle"),
+        #     lambda: self.toggleDrawMode(False, createMode="circle"),
+        #     shortcuts["create_circle"],
+        #     "objects",
+        #     self.tr("Start drawing circles"),
+        #     enabled=False,
+        # )
+        # createLineMode = action(
+        #     self.tr("Create Line"),
+        #     lambda: self.toggleDrawMode(False, createMode="line"),
+        #     shortcuts["create_line"],
+        #     "objects",
+        #     self.tr("Start drawing lines"),
+        #     enabled=False,
+        # )
+        # createPointMode = action(
+        #     self.tr("Create Point"),
+        #     lambda: self.toggleDrawMode(False, createMode="point"),
+        #     shortcuts["create_point"],
+        #     "objects",
+        #     self.tr("Start drawing points"),
+        #     enabled=False,
+        # )
+        # createLineStripMode = action(
+        #     self.tr("Create LineStrip"),
+        #     lambda: self.toggleDrawMode(False, createMode="linestrip"),
+        #     shortcuts["create_linestrip"],
+        #     "objects",
+        #     self.tr("Start drawing linestrip. Ctrl+LeftClick ends creation."),
+        #     enabled=False,
+        # )
         editMode = action(
             self.tr("Edit Polygons"),
             self.setEditMode,
@@ -671,12 +677,12 @@ class MainWindow(QtWidgets.QMainWindow):
         fill_drawing.trigger()
 
         # Lavel list context menu.
-        labelMenu = QtWidgets.QMenu()
-        utils.addActions(labelMenu, (edit, delete))
-        self.labelList.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.labelList.customContextMenuRequested.connect(
-            self.popLabelListMenu
-        )
+        # labelMenu = QtWidgets.QMenu()
+        # utils.addActions(labelMenu, (edit, delete))
+        # self.labelList.setContextMenuPolicy(Qt.CustomContextMenu)
+        # self.labelList.customContextMenuRequested.connect(
+        #     self.popLabelListMenu
+        # )
 
         # Store actions for further handling.
         self.actions = utils.struct(
@@ -699,10 +705,10 @@ class MainWindow(QtWidgets.QMainWindow):
             createMode=createMode,
             editMode=editMode,
             createRectangleMode=createRectangleMode,
-            createCircleMode=createCircleMode,
-            createLineMode=createLineMode,
-            createPointMode=createPointMode,
-            createLineStripMode=createLineStripMode,
+            # createCircleMode=createCircleMode,
+            # createLineMode=createLineMode,
+            # createPointMode=createPointMode,
+            # createLineStripMode=createLineStripMode,
             zoom=zoom,
             zoomIn=zoomIn,
             zoomOut=zoomOut,
@@ -723,11 +729,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 delete,
                 None,
                 undo,
-                undoLastPoint,
-                None,
-                addPointToEdge,
-                None,
-                toggle_keep_prev_mode,
+                # undoLastPoint,
+                # None,
+                # addPointToEdge,
+                # None,
+                # toggle_keep_prev_mode,
             ),
             # menu shown at right click
             menu=(
@@ -742,7 +748,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 copy,
                 delete,
                 undo,
-                undoLastPoint,
+                # undoLastPoint,
                 addPointToEdge,
                 removePoint,
             ),
@@ -750,10 +756,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 close,
                 createMode,
                 createRectangleMode,
-                createCircleMode,
-                createLineMode,
-                createPointMode,
-                createLineStripMode,
+                # createCircleMode,
+                # createLineMode,
+                # createPointMode,
+                # createLineStripMode,
                 editMode,
                 brightnessContrast,
             ),
@@ -767,9 +773,9 @@ class MainWindow(QtWidgets.QMainWindow):
             file=self.menu(self.tr("&File")),
             # edit=self.menu(self.tr("&Edit")),
             view=self.menu(self.tr("&View")),
-            help=self.menu(self.tr("&Help")),
+            # help=self.menu(self.tr("&Help")),
             recentFiles=QtWidgets.QMenu(self.tr("Open &Recent")),
-            labelList=labelMenu,
+            # labelList=labelMenu,
         )
 
         utils.addActions(
@@ -791,7 +797,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 quit,
             ),
         )
-        utils.addActions(self.menus.help, (help,))
+        # utils.addActions(self.menus.help, (help,))
         utils.addActions(
             self.menus.view,
             (
@@ -952,10 +958,10 @@ class MainWindow(QtWidgets.QMainWindow):
         actions = (
             self.actions.createMode,
             self.actions.createRectangleMode,
-            self.actions.createCircleMode,
-            self.actions.createLineMode,
-            self.actions.createPointMode,
-            self.actions.createLineStripMode,
+            # self.actions.createCircleMode,
+            # self.actions.createLineMode,
+            # self.actions.createPointMode,
+            # self.actions.createLineStripMode,
             self.actions.editMode,
         )
         # utils.addActions(self.menus.edit, actions + self.actions.editMenu)
@@ -983,10 +989,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.save.setEnabled(False)
         self.actions.createMode.setEnabled(True)
         self.actions.createRectangleMode.setEnabled(True)
-        self.actions.createCircleMode.setEnabled(True)
-        self.actions.createLineMode.setEnabled(True)
-        self.actions.createPointMode.setEnabled(True)
-        self.actions.createLineStripMode.setEnabled(True)
+        # self.actions.createCircleMode.setEnabled(True)
+        # self.actions.createLineMode.setEnabled(True)
+        # self.actions.createPointMode.setEnabled(True)
+        # self.actions.createLineStripMode.setEnabled(True)
         title = __appname__ + " (검수자용)"
         if self.filename is not None:
             title = "{} - {}".format(title, self.filename)
@@ -1067,53 +1073,53 @@ class MainWindow(QtWidgets.QMainWindow):
         if edit:
             self.actions.createMode.setEnabled(True)
             self.actions.createRectangleMode.setEnabled(True)
-            self.actions.createCircleMode.setEnabled(True)
-            self.actions.createLineMode.setEnabled(True)
-            self.actions.createPointMode.setEnabled(True)
-            self.actions.createLineStripMode.setEnabled(True)
+            # self.actions.createCircleMode.setEnabled(True)
+            # self.actions.createLineMode.setEnabled(True)
+            # self.actions.createPointMode.setEnabled(True)
+            # self.actions.createLineStripMode.setEnabled(True)
         else:
             if createMode == "polygon":
                 self.actions.createMode.setEnabled(False)
                 self.actions.createRectangleMode.setEnabled(True)
-                self.actions.createCircleMode.setEnabled(True)
-                self.actions.createLineMode.setEnabled(True)
-                self.actions.createPointMode.setEnabled(True)
-                self.actions.createLineStripMode.setEnabled(True)
+                # self.actions.createCircleMode.setEnabled(True)
+                # self.actions.createLineMode.setEnabled(True)
+                # self.actions.createPointMode.setEnabled(True)
+                # self.actions.createLineStripMode.setEnabled(True)
             elif createMode == "rectangle":
                 self.actions.createMode.setEnabled(True)
                 self.actions.createRectangleMode.setEnabled(False)
-                self.actions.createCircleMode.setEnabled(True)
-                self.actions.createLineMode.setEnabled(True)
-                self.actions.createPointMode.setEnabled(True)
-                self.actions.createLineStripMode.setEnabled(True)
+                # self.actions.createCircleMode.setEnabled(True)
+                # self.actions.createLineMode.setEnabled(True)
+                # self.actions.createPointMode.setEnabled(True)
+                # self.actions.createLineStripMode.setEnabled(True)
             elif createMode == "line":
                 self.actions.createMode.setEnabled(True)
                 self.actions.createRectangleMode.setEnabled(True)
-                self.actions.createCircleMode.setEnabled(True)
-                self.actions.createLineMode.setEnabled(False)
-                self.actions.createPointMode.setEnabled(True)
-                self.actions.createLineStripMode.setEnabled(True)
+                # self.actions.createCircleMode.setEnabled(True)
+                # self.actions.createLineMode.setEnabled(False)
+                # self.actions.createPointMode.setEnabled(True)
+                # self.actions.createLineStripMode.setEnabled(True)
             elif createMode == "point":
                 self.actions.createMode.setEnabled(True)
                 self.actions.createRectangleMode.setEnabled(True)
-                self.actions.createCircleMode.setEnabled(True)
-                self.actions.createLineMode.setEnabled(True)
-                self.actions.createPointMode.setEnabled(False)
-                self.actions.createLineStripMode.setEnabled(True)
+                # self.actions.createCircleMode.setEnabled(True)
+                # self.actions.createLineMode.setEnabled(True)
+                # self.actions.createPointMode.setEnabled(False)
+                # self.actions.createLineStripMode.setEnabled(True)
             elif createMode == "circle":
                 self.actions.createMode.setEnabled(True)
                 self.actions.createRectangleMode.setEnabled(True)
-                self.actions.createCircleMode.setEnabled(False)
-                self.actions.createLineMode.setEnabled(True)
-                self.actions.createPointMode.setEnabled(True)
-                self.actions.createLineStripMode.setEnabled(True)
+                # self.actions.createCircleMode.setEnabled(False)
+                # self.actions.createLineMode.setEnabled(True)
+                # self.actions.createPointMode.setEnabled(True)
+                # self.actions.createLineStripMode.setEnabled(True)
             elif createMode == "linestrip":
                 self.actions.createMode.setEnabled(True)
                 self.actions.createRectangleMode.setEnabled(True)
-                self.actions.createCircleMode.setEnabled(True)
-                self.actions.createLineMode.setEnabled(True)
-                self.actions.createPointMode.setEnabled(True)
-                self.actions.createLineStripMode.setEnabled(False)
+                # self.actions.createCircleMode.setEnabled(True)
+                # self.actions.createLineMode.setEnabled(True)
+                # self.actions.createPointMode.setEnabled(True)
+                # self.actions.createLineStripMode.setEnabled(False)
             else:
                 raise ValueError("Unsupported createMode: %s" % createMode)
         self.actions.editMode.setEnabled(not edit)
@@ -1377,7 +1383,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 flags=flags,
             )
             self.labelFile = lf
-            items = self.fileListWidgetList.findItems(
+            items = self.fileListWidgetList[self.tabs.currentIndex()].findItems(
                 self.imagePath, Qt.MatchExactly
             )
             if len(items) > 0:
@@ -1698,6 +1704,8 @@ class MainWindow(QtWidgets.QMainWindow):
         assert not self.image.isNull(), "cannot paint null image"
         self.canvas.scale = 0.01 * self.zoomWidget.value()
         self.canvas.adjustSize()
+        self.canvas.setMinimumHeight(self.canvas.pixmap.height() * self.zoomWidget.value() * 0.01 + 30)
+        self.canvas.setMinimumWidth(self.canvas.pixmap.width() * self.zoomWidget.value() * 0.01 + 30)
         self.canvas.update()
 
     def adjustScale(self, initial=False):
@@ -1708,7 +1716,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def scaleFitWindow(self):
         """Figure out the size of the pixmap to fit the main widget."""
-        e = 2.0  # So that no scrollbars are generated.
+        e = 32.0  # So that no scrollbars are generated.
         w1 = self.centralWidget().width() - e
         h1 = self.centralWidget().height() - e
         a1 = w1 / h1
@@ -1763,7 +1771,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def loadRecent(self, filename):
         if self.mayContinue():
-            self.loadFile(filename)
+            self.loadFile(self.tabs.currentIndex(), filename)
 
     def openPrevImg(self, _value=False):
         keep_prev = self._config["keep_prev"]
@@ -1787,7 +1795,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self._config["keep_prev"] = keep_prev
 
-    def openNextImg(self, tabIndex, _value=False, load=True):
+    def openNextImg(self, _value=False, load=True):
         keep_prev = self._config["keep_prev"]
         if Qt.KeyboardModifiers() == (Qt.ControlModifier | Qt.ShiftModifier):
             self._config["keep_prev"] = True
@@ -1967,7 +1975,7 @@ class MainWindow(QtWidgets.QMainWindow):
             os.remove(label_file)
             logger.info("Label file is removed: {}".format(label_file))
 
-            item = self.fileListWidgetList.currentItem()
+            item = self.fileListWidgetList[self.tabs.currentIndex()].currentItem()
             item.setCheckState(Qt.Unchecked)
 
             self.resetState()
@@ -2150,6 +2158,9 @@ class MainWindow(QtWidgets.QMainWindow):
             if os.path.isfile(ss[0] + "_" + ss[1] + ".bak"):
                 continue
 
+            if filename.find(self.login_id) == -1 :
+                continue
+
             label_file = osp.splitext(filename)[0] + ".json"
             if self.output_dir:
                 label_file_without_path = osp.basename(label_file)
@@ -2163,7 +2174,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # item.setCheckState(Qt.Unchecked)
 
             self.fileListWidgetList[tabIndex].addItem(item)
-        self.openNextImg(tabIndex, load=load)
+        self.openNextImg(load=load)
 
     def scanAllImages(self, folderPath):
         extensions = [
@@ -2179,6 +2190,10 @@ class MainWindow(QtWidgets.QMainWindow):
         images.sort(key=lambda x: x.lower())
         return images
 
+    def changeTabTitle(self):
+        for i in range(0, 2):
+            self.tabs.setTabText(i, tab_title[i] + " ({:,}건)".format(self.fileListWidgetList[i].count()))
+
     def tabChanged(self):
         ti = self.tabs.currentIndex()
         # print("ci=" + str(self.fileListWidgetList[ti].currentRow()))
@@ -2191,7 +2206,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # by hw1230
     def login(self):
-        self.login_id = self.id.text()
+        self.login_id = self.id.text().strip()
+
+        if self.login_id == "":
+            QMessageBox.warning(self, "", "전화번호를 입력하세요.", QMessageBox.Ok)
+            return
 
         for i in range(0, 2):
             self.fileListWidgetList[i].clear()
@@ -2200,7 +2219,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.okBtnList[i].setEnabled(False)
             self.rejectBtnList[i].setEnabled(False)
 
-            bucket_download_directory = down_directory_list[0]
+            bucket_download_directory = down_directory_list[i]
     
             try:
                 target_path = local_depository + local_directory_name[i] + r"\\"
@@ -2225,6 +2244,7 @@ class MainWindow(QtWidgets.QMainWindow):
             #         ff = f.rsplit('.', 1)[0].rsplit('_', 1)
             #         item = QtWidgets.QListWidgetItem(ff[0] + "." + ff[1])
             #         # self.doneListWidget.addItem(item)
+        self.changeTabTitle()
 
     def process(self, is_ok):       # is_ok : 승인 / 반려
         ti = self.tabs.currentIndex()
@@ -2237,15 +2257,27 @@ class MainWindow(QtWidgets.QMainWindow):
         upFile = os.path.splitext(fullPath)[0] + ".json"
         # print(upFile)
 
+        log_bucket_name = down_bucket_name_list[ti]
+        remain_num = self.fileListWidgetList[ti].count() - 1
+        ok_num = self.okListWidgetList[ti].count()
+        reject_num = self.rejectListWidgetList[ti].count()
+
         this_bucket_name = up_bucket_name  # 승인
+        action_type = "승인 "
         if not is_ok:
             this_bucket_name = upnok_bucket_name  # 반려
+            action_type = "반려 "
+            reject_num = reject_num + 1
+        else:
+            ok_num = ok_num + 1
 
         if ti == 0:   # process03
             try:
                 if os.path.isfile(upFile):
                     # json 업로드
                     osh.upload_object_simply(this_bucket_name, upFile, upFile.split(local_directory_name[ti] + r"\\")[1].replace(os.path.sep, "/"))
+                    osh.log_by_bucket_name(local_depository + local_directory_name[ti] + r"\\",
+                                           action_type + fileName + "\n" + self.login_id + " 잔여: %d건, 승인: %d건, 반려: %d건" % (remain_num, ok_num, reject_num), log_bucket_name)
 
                     # 로컬 .json 을 _json.bak 으로 변경
                     newName = osh.get_bak_file_name(upFile)
@@ -2262,6 +2294,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 if os.path.isfile(upFile):
                     # json 업로드
                     osh.upload_object_simply(this_bucket_name, upFile, upFile.split(local_directory_name[ti] + r"\\")[1].replace(os.path.sep, "/"))
+                    osh.log_by_bucket_name(local_depository + local_directory_name[ti] + r"\\",
+                                           action_type + fileName + "\n" + self.login_id + " 잔여: %d건, 승인: %d건, 반려: %d건" % (remain_num, ok_num, reject_num), log_bucket_name)
 
                     # -rework json 삭제
                     osh.delete_object(down_bucket_name_list[1], upFile.split(local_directory_name[ti] + r"\\")[1].replace(os.path.sep, "/"))
@@ -2288,9 +2322,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def ok(self):
         self.process(True)
+        ti = self.tabs.currentIndex()
+        self.resultLabelList[ti][0].setText(result_title[0] + " ({:,}건)".format(self.okListWidgetList[ti].count()))
+        self.changeTabTitle()
 
     def reject(self):
         self.process(False)
+        ti = self.tabs.currentIndex()
+        self.resultLabelList[ti][1].setText(result_title[1] + " ({:,}건)".format(self.rejectListWidgetList[ti].count()))
+        self.changeTabTitle()
 
     # by hw1230
     def autoAnnotation(self):

@@ -92,7 +92,7 @@ class LabelDialog(QtWidgets.QDialog):
                 QtWidgets.QAbstractItemView.InternalMove
             )
         self.labelList.currentItemChanged.connect(self.labelSelected)
-        self.labelList.itemDoubleClicked.connect(self.labelDoubleClicked)
+        # self.labelList.itemDoubleClicked.connect(self.labelDoubleClicked)
         self.edit.setListWidget(self.labelList)
         layout.addWidget(self.labelList)
         # label_flags
@@ -143,8 +143,8 @@ class LabelDialog(QtWidgets.QDialog):
         if text:
             self.accept()
 
-    def labelDoubleClicked(self, item):
-        self.validate()
+    # def labelDoubleClicked(self, item):
+    #     self.validate()
 
     def postProcess(self):
         text = self.edit.text()
@@ -200,7 +200,7 @@ class LabelDialog(QtWidgets.QDialog):
             return int(group_id)
         return None
 
-    def popUp(self, text=None, move=True, flags=None, group_id=None):
+    def popUp(self, text=None, move=False, flags=None, group_id=None):
         if self._fit_to_content["row"]:
             self.labelList.setMinimumHeight(
                 self.labelList.sizeHintForRow(0) * self.labelList.count() + 2
