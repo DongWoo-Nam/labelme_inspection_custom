@@ -1,0 +1,4 @@
+labelme_inspection_211019.exe filter=lfs diff=lfs merge=lfs -text
+labelme_inspection_211228.exe filter=lfs diff=lfs merge=lfs -text
+labelme_inspection_211228.zip filter=lfs diff=lfs merge=lfs -text
+labelme_worker_inspection_211228.zip filter=lfs diff=lfs merge=lfs -text
