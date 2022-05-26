@@ -1,3 +1,6 @@
+# To-Do
+ - 작업 시 폴리곤 혹은 바운딩 박스가 모두 삭제되면 저장 되지 않도록 수정(마지막 폴리곤 혹은 바운딩박스가 삭제 되지 않도록 하거나 삭제되면 메세지 출력할 수 있도록 수정 필요)
+
 <h1 align="center">
   <img src="labelme/icons/icon.png"><br/>labelme
 </h1>
